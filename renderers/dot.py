@@ -11,6 +11,16 @@ class MLDRenderGraphviz(MLDRenderBase):
     file_suffix = '.dot'
     default_fontname = "Optima, Rachana, Sawasdee, sans-serif"
 
+    def expand_colour(self, colour):
+        if not colour:
+            return '#FFFFFF00'
+        if colour[0] == '#' and len(colour) == 4:
+            return '#{}{}{}{}{}{}'.format(colour[1], colour[1],
+                                          colour[2], colour[2],
+                                          colour[3], colour[3])
+        return colour
+
+
     def region_table(self, sequence, width, height, labels, place='cell'):
         rows = []
         if place == 'cell':
@@ -108,11 +118,15 @@ class MLDRenderGraphviz(MLDRenderBase):
         return '<table cellborder="0" cellspacing="0" cellpadding="%s" border="0" fixedsize="false" color="blue" height="%.2f" width="%.2f">%s</table>' \
                     % (cellpadding, height * 72, width * 72, ''.join(rows))
 
-    def header(self):
+    def header(self, memorymap):
         self.write("""
 digraph memory {{
     ranksep = 0;
     nodesep = 0;
+    graph [
+        pad = {};
+        bgcolor = "{}";
+    ];
     node [
         shape=rect,
         penwidth=2,
@@ -122,7 +136,8 @@ digraph memory {{
         fontname="{}",
         style=invis
     ];
-""".format(self.default_fontname, self.default_fontname))
+""".format(memorymap.document_padding, self.expand_colour(memorymap.document_bgcolour),
+           self.default_fontname, self.default_fontname))
 
     def footer(self):
         self.write("""
@@ -130,7 +145,7 @@ digraph memory {{
 """)
 
     def render(self, memorymap):
-        self.header()
+        self.header(memorymap)
         if isinstance(memorymap, Sequence):
             self.render_sequence(memorymap, '')
 
@@ -226,6 +241,7 @@ RIGHT
                     attrs.append('style=filled')
                 if region.outline:
                     attrs.append('color="{}"'.format(region.outline))
+                attrs.append('penwidth="{}"'.format(region.outline_width * 72))
                 self.write('    region%s%08x [ %s ];\n' % (identifier, region.address,
                                                            ', '.join(attrs)))
 

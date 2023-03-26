@@ -50,6 +50,7 @@ class MemoryRegion(object):
         self.labels = {}
         self.fill = None
         self.outline = None
+        self.outline_width = 2.0 / 72
         # The container can be another sequence which we will expand out?
         self.container = None
 
@@ -65,6 +66,9 @@ class MemoryRegion(object):
 
     def set_outline_colour(self, colour):
         self.outline = colour
+
+    def set_outline_width(self, width):
+        self.outline_width = width
 
 
 class DiscontinuityRegion(MemoryRegion):
@@ -133,7 +137,7 @@ class Sequence(object):
         self.address_formatter = ValueFormatterC()
         self.size_formatter = None
 
-        # Render parameters
+        # Layout parameters
         self.unit_height = 0.2
         self.unit_size = 1024 * 32
         self.min_units = 1
@@ -141,6 +145,10 @@ class Sequence(object):
         self.region_max_height = 2
         self.discontinuity_height = self.region_min_height * 1.5
         self.region_width = 2
+
+        # Render parameters
+        self.document_bgcolour = '#fff'
+        self.document_padding = 0.125
 
     def add_region(self, region):
         self.regions.append(region)

@@ -38,7 +38,10 @@ class SVGElement(object):
         self.write(fh, '')
         return fh.getvalue()
 
-    def add_inner(self, element):
+    def prepend_inner(self, element):
+        self.inner.insert(0, element)
+
+    def append_inner(self, element):
         self.inner.append(element)
 
     def units(self, value):
@@ -128,7 +131,7 @@ class SVGRaw(SVGElement):
 
 class SVGRect(SVGElement):
 
-    def __init__(self, x0, y0, x1=None, y1=None, width=None, height=None, fill=None, stroke=None):
+    def __init__(self, x0, y0, x1=None, y1=None, width=None, height=None, fill=None, stroke=None, stroke_width=None):
         super(SVGRect, self).__init__()
         self.x0 = x0
         self.y0 = y0
@@ -136,6 +139,7 @@ class SVGRect(SVGElement):
         self.y1 = y1 if y1 is not None else y0 + height
         self.fill = fill
         self.stroke = stroke
+        self.stroke_width = stroke_width
 
     @property
     def self_bounds(self):
@@ -154,17 +158,20 @@ class SVGRect(SVGElement):
             attrs.append('fill="{}"'.format(self.fill))
         if self.stroke:
             attrs.append('stroke="{}"'.format(self.stroke))
+        if self.stroke_width:
+            attrs.append('stroke-width="{}"'.format(self.units(self.stroke_width)))
 
         fh.write(indent + "<rect {}/>\n".format(" ".join(attrs)))
 
 
 class SVGPath(SVGElement):
 
-    def __init__(self, fill=None, stroke=None):
+    def __init__(self, fill=None, stroke=None, stroke_width=None):
         super(SVGPath, self).__init__()
         self.components = []
         self.fill = fill
         self.stroke = stroke
+        self.stroke_width = stroke_width
 
     def move(self, x, y):
         self.components.append(('M', x, y))
@@ -187,6 +194,8 @@ class SVGPath(SVGElement):
             attrs.append('transform="{}"'.format(self.transform_attribute()))
         attrs.append('fill="{}"'.format(self.fill if self.fill else 'none'))
         attrs.append('stroke="{}"'.format(self.stroke if self.stroke else 'none'))
+        if self.stroke_width:
+            attrs.append('stroke-width="{}"'.format(self.units(self.stroke_width)))
 
         path_data = []
         for component in self.components:
@@ -337,15 +346,25 @@ class SVGGroup(SVGElement):
     def __init__(self):
         super(SVGGroup, self).__init__()
 
-    def add(self, element):
+    def prepend(self, element):
         if isinstance(element, (Bounds, tuple)):
             self.self_bounds += element
         elif isinstance(element, SVGElement):
-            self.add_inner(element)
+            self.prepend_inner(element)
         else:
             if not element.endswith('\n'):
                 element += '\n'
-            self.add_inner(SVGRaw(element))
+            self.prepend_inner(SVGRaw(element))
+
+    def append(self, element):
+        if isinstance(element, (Bounds, tuple)):
+            self.self_bounds += element
+        elif isinstance(element, SVGElement):
+            self.append_inner(element)
+        else:
+            if not element.endswith('\n'):
+                element += '\n'
+            self.append_inner(SVGRaw(element))
 
     def __iter__(self):
         return iter(self.inner)
@@ -393,12 +412,19 @@ class MLDRenderSVG(MLDRenderBase):
     def render(self, memorymap):
         self.groups = SVGGroup()
         if isinstance(memorymap, Sequence):
-            self.groups.add(self.render_sequence(memorymap))
+            self.groups.append(self.render_sequence(memorymap))
 
         elif isinstance(memorymap, MultipleMaps):
             for (index, sequence) in enumerate(memorymap):
                 # FIXME This isn't right; we want to transform the groups to move them around?
-                self.groups.add(self.render_sequence(sequence))
+                self.groups.append(self.render_sequence(sequence))
+
+        self.groups.prepend(SVGRect(self.groups.bounds.x0 - memorymap.document_padding,
+                                    self.groups.bounds.y0 - memorymap.document_padding,
+                                    self.groups.bounds.x1 + memorymap.document_padding,
+                                    self.groups.bounds.y1 + memorymap.document_padding,
+                                    fill=memorymap.document_bgcolour,
+                                    stroke=None))
 
         # Transform the group so that it is origined at 0,0
         self.groups.transform = Translate(-self.groups.bounds.x0, -self.groups.bounds.y0)
@@ -434,7 +460,8 @@ class MLDRenderSVG(MLDRenderBase):
                     if path_pass == 0:
                         path = SVGPath(fill=fill)
                     else:
-                        path = SVGPath(stroke=stroke)
+                        path = SVGPath(stroke=stroke,
+                                       stroke_width=region.outline_width)
                     path.move(0, y)
                     path.line(0, y + xoffset)
                     path.line(-xoffset, y + xoffset + ysegmentsize * 1)
@@ -454,10 +481,11 @@ class MLDRenderSVG(MLDRenderBase):
                     path.line(sequence.region_width, y + xoffset)
                     path.line(sequence.region_width, y)
 
-                    groups.add(path)
+                    groups.append(path)
             else:
-                groups.add(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
-                                   fill=region.fill or '#fff', stroke=region.outline or '#000'))
+                groups.append(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
+                                      fill=region.fill or '#fff',
+                                      stroke=region.outline, stroke_width=region.outline_width))
 
             for label in region.labels.values():
                 xpos = label.position[0]
@@ -518,7 +546,7 @@ class MLDRenderSVG(MLDRenderBase):
 
                 #print("Position %r => %r, %f, %f (%r)" % (label.position, pos, lx, ly - y, label.label))
 
-                groups.add(SVGText(lx, ly, label.label, position=pos))
+                groups.append(SVGText(lx, ly, label.label, position=pos))
 
             y += height
 
