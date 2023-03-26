@@ -490,9 +490,42 @@ class MLDRenderSVG(MLDRenderBase):
 
                     groups.append(path)
             else:
-                groups.append(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
-                                      fill=region.fill or '#fff',
-                                      stroke=region.outline, stroke_width=region.outline_width))
+                if region.outline_lower == 'solid' and region.outline_upper == 'solid':
+                    groups.append(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
+                                          fill=region.fill or '#fff',
+                                          stroke=region.outline, stroke_width=region.outline_width))
+                else:
+                    # They requested a different type of line in the upper or lower, so this isn't
+                    # a simple rectangle...
+                    # First fill the inside of the region
+                    groups.append(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
+                                          fill=region.fill or '#fff',
+                                          stroke=None))
+                    # Now draw the outline as required
+                    path = SVGPath(stroke=region.outline,
+                                   stroke_width=region.outline_width)
+                    path.move(0, y)
+                    path.line(0, y + height)                            # Down the left
+
+                    if region.outline_lower in ('solid', 'double'):
+                        path.line(sequence.region_width, y + height)
+                    else:
+                        path.move(sequence.region_width, y + height)
+
+                    path.line(sequence.region_width, y)                 # Up the right
+
+                    if region.outline_upper in ('solid', 'double'):
+                        path.line(0, y)
+
+                    if region.outline_lower == 'double':
+                        path.move(0, y + height - region.outline_width * 2)
+                        path.line(sequence.region_width, y + height - region.outline_width * 2)
+
+                    if region.outline_upper == 'double':
+                        path.move(0, y + region.outline_width * 2)
+                        path.line(sequence.region_width, y + region.outline_width * 2)
+
+                    groups.append(path)
 
             for label in region.labels.values():
                 xpos = label.position[0]

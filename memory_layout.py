@@ -51,6 +51,8 @@ class MemoryRegion(object):
         self.fill = None
         self.outline = '#000'
         self.outline_width = 2.0 / 72
+        self.outline_lower = 'solid'
+        self.outline_upper = 'solid'
         # The container can be another sequence which we will expand out?
         self.container = None
 
