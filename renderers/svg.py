@@ -7,6 +7,8 @@ import io
 from memory_layout import Sequence, MemoryRegion, DiscontinuityRegion
 from structs import Bounds, Transform, Matrix, Translate
 
+from . import MLDRenderBase
+
 
 class SVGElement(object):
     """
@@ -355,20 +357,12 @@ class SVGGroup(SVGElement):
         fh.write(indent + '</g>\n')
 
 
-class SVGRender(object):
+class MLDRenderSVG(MLDRenderBase):
     default_fontname = "Optima, Rachana, Sawasdee, sans-serif"
 
     def __init__(self, fh=None):
-        if isinstance(fh, str):
-            fh = open(fh, 'w')
-        self.fh = fh or sys.stdout
+        super(MLDRenderSVG, self).__init__(fh)
         self.groups = []
-
-    def __del__(self):
-        self.fh.close()
-
-    def write(self, content):
-        self.fh.write(content)
 
     def header(self, bounds):
         self.write("""\

@@ -4,20 +4,11 @@ Graphviz Dot renderer for the Memory Layout Diagrams.
 
 from memory_layout import Sequence, MemoryRegion, DiscontinuityRegion
 
+from . import MLDRenderBase
 
-class GraphvizRender(object):
+
+class MLDRenderGraphviz(MLDRenderBase):
     default_fontname = "Optima, Rachana, Sawasdee, sans-serif"
-
-    def __init__(self, fh=None):
-        if isinstance(fh, str):
-            fh = open(fh, 'w')
-        self.fh = fh or sys.stdout
-
-    def __del__(self):
-        self.fh.close()
-
-    def write(self, content):
-        self.fh.write(content)
 
     def region_table(self, sequence, width, height, labels, place='cell'):
         rows = []

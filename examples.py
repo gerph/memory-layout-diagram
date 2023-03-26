@@ -8,8 +8,8 @@ import os
 import sys
 
 from memory_layout import Sequence, MemoryRegion, ValueFormatterAcorn
-from renderers.dot import GraphvizRender
-from renderers.svg import SVGRender
+from renderers.dot import MLDRenderGraphviz
+from renderers.svg import MLDRenderSVG
 
 
 parser = argparse.ArgumentParser(usage="%s [<options>] <dataset>" % (os.path.basename(sys.argv[0]),))
@@ -21,10 +21,10 @@ options = parser.parse_args()
 
 
 if options.format == 'svg':
-    renderer_class = SVGRender
+    renderer_class = MLDRenderSVG
     filename = 'memory.svg'
 elif options.format == 'dot':
-    renderer_class = GraphvizRender
+    renderer_class = MLDRenderGraphviz
     filename = 'memory.dot'
 example = options.dataset
 
