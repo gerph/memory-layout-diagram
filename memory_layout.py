@@ -61,6 +61,10 @@ class MemoryRegion(object):
     def add_label(self, label, position=('ic', 'ic')):
         self.labels[position] = RegionLabel(label, position)
 
+    def remove_label(self, position=('ic', 'ic')):
+        if position in self.labels:
+            del self.labels[position]
+
     def set_fill_colour(self, colour):
         self.fill = colour
 
@@ -143,15 +147,32 @@ class Sequence(object):
         self.min_units = 1
         self.region_min_height = 0.625
         self.region_max_height = 2
-        self.discontinuity_height = self.region_min_height * 1.5
+        self._discontinuity_height = None
         self.region_width = 2
 
         # Render parameters
         self.document_bgcolour = '#fff'
         self.document_padding = 0.125
 
+    @property
+    def discontinuity_height(self):
+        if self._discontinuity_height is None:
+            return self.region_min_height * 1.5
+        else:
+            return self._discontinuity_height
+
+    @discontinuity_height.setter
+    def discontinuity_height(self, value):
+        self._discontinuity_height = value
+
     def add_region(self, region):
         self.regions.append(region)
+
+    def find_region(self, address):
+        for region in self.regions:
+            if region.address == address:
+                return region
+        raise RuntimeError("Cannot find region for address {}".format(self.address_format(address)))
 
     def sort(self):
         self.regions = sorted(self.regions, key=lambda region: region.address)

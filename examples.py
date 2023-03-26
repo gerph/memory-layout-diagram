@@ -58,6 +58,9 @@ if example.startswith('bbc'):
     sequence.unit_size = 0x100
     sequence.unit_height = 0.5
     sequence.region_min_height = 0.625
+    sequence.region_max_height = sequence.region_min_height * 1.5
+    sequence.discontinuity_height = sequence.region_min_height
+    sequence.region_width = 1.5
 
     for (address, size, name) in memory:
         region = MemoryRegion(address, size)
@@ -72,6 +75,28 @@ if example.startswith('bbc'):
     sequence.add_discontinuities()
     sequence.add_address_labels(start=True, end=False, size=False, side='left', end_exclusive=False,
                                 final_end=True)
+
+    # Add some special labels
+    sequence.find_region(0xE00).add_label("PAGE", ('er', 'jb'))
+    region = sequence.find_region(0x1900)
+    region.add_label("PAGE on disk systems", ('er', 'jb'))
+    region.add_label("TOP", ('er', 'jt'))
+
+    region = sequence.find_region(0x1F00)
+    region.add_label("TOP of variables\n(?2 + 256 * ?3)", ('er', 'jt'))
+    # Remove the address labels
+    region.remove_label(('el', 'jb'))
+    sequence.find_region(0x2000).remove_label(('el', 'jb'))
+    sequence.find_region(0x7B00).remove_label(('el', 'jb'))
+    region = sequence.find_region(0x7C00)
+    region.remove_label(('el', 'jb'))
+    region.add_label("HIMEM", ('er', 'jb'))
+    region.add_label("RAMTOP", ('er', 'jt'))
+    # Replace the address label
+    region.add_label("&7FFF", ('el', 'jt'))
+    region = sequence.find_region(0x8000)
+    region.remove_label(('el', 'jb'))
+    region.add_label('Paged ROMs', ('erm', 'ic'))
 
     # Workspace
     ws_sequence = Sequence()
