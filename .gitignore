@@ -1,1 +1,4 @@
 *.pyc
+memory*.svg
+memory*.dot
+memory*.png

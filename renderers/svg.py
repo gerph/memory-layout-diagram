@@ -18,7 +18,10 @@ class SVGElement(object):
     The element might have a transformation applied to its bounds.
     This transform needs to be placed in the element's body.
     """
+    # Our configurables
     use_inches = True
+
+    # Constants
     DPI = 96
 
     def __init__(self):
@@ -358,6 +361,8 @@ class SVGGroup(SVGElement):
 
 
 class MLDRenderSVG(MLDRenderBase):
+    file_suffix = '.svg'
+
     default_fontname = "Optima, Rachana, Sawasdee, sans-serif"
 
     def __init__(self, fh=None):

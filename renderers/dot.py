@@ -8,6 +8,7 @@ from . import MLDRenderBase
 
 
 class MLDRenderGraphviz(MLDRenderBase):
+    file_suffix = '.dot'
     default_fontname = "Optima, Rachana, Sawasdee, sans-serif"
 
     def region_table(self, sequence, width, height, labels, place='cell'):

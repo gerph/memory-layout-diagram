@@ -4,6 +4,8 @@ Memory Layout Diagram renderer implementations.
 
 
 class MLDRenderBase(object):
+    # Overridable suggested filename suffix
+    file_suffix = '.dat'
 
     def __init__(self, fh=None):
         if isinstance(fh, str):
