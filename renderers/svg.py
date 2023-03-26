@@ -543,6 +543,9 @@ class MLDRenderSVG(MLDRenderBase):
                 elif ypos == 'jb':
                     ly = y + height
                     pos += 'c'
+                else:
+                    print("Unrecognised y position '{}'".format(ypos))
+                    pos += 'c'
 
                 #print("Position %r => %r, %f, %f (%r)" % (label.position, pos, lx, ly - y, label.label))
 

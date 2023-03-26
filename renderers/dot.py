@@ -158,6 +158,13 @@ digraph memory {{
     def render_sequence(self, sequence, identifier):
         last_region = None
         last_left = None
+
+        any_on_left = False
+        for region in sequence.regions:
+            if any(position[0][0:2] == 'el' for position in region.labels.keys()):
+                any_on_left = True
+                break
+
         for region in reversed(sequence.regions):
             height_in_units = (region.size / sequence.unit_size)
             height_in_units = max(height_in_units, sequence.min_units)
@@ -169,8 +176,8 @@ digraph memory {{
                 height = min(height, sequence.discontinuity_height)
 
             # We must write the nodes in the correct order for positioning purposes
-            has_left = any(position[0] == 'el' for position in region.labels.keys())
-            has_right = any(position[0] == 'er' for position in region.labels.keys())
+            has_left = any_on_left
+            has_right = any(position[0][0:2] == 'er' for position in region.labels.keys())
             if has_left or has_right:
                 same = """
     {
@@ -237,10 +244,10 @@ RIGHT
             if region.fill or region.outline:
                 attrs = []
                 if region.fill:
-                    attrs.append('fillcolor="{}"'.format(region.fill))
+                    attrs.append('fillcolor="{}"'.format(self.expand_colour(region.fill)))
                     attrs.append('style=filled')
                 if region.outline:
-                    attrs.append('color="{}"'.format(region.outline))
+                    attrs.append('color="{}"'.format(self.expand_colour(region.outline)))
                 attrs.append('penwidth="{}"'.format(region.outline_width * 72))
                 self.write('    region%s%08x [ %s ];\n' % (identifier, region.address,
                                                            ', '.join(attrs)))

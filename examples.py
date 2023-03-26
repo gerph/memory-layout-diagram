@@ -7,7 +7,7 @@ import argparse
 import os
 import sys
 
-from memory_layout import Sequence, MemoryRegion, ValueFormatterAcorn, ValueFormatterSI
+from memory_layout import Sequence, MemoryRegion, DiscontinuityRegion, ValueFormatterAcorn, ValueFormatterSI
 from renderers.dot import MLDRenderGraphviz
 from renderers.svg import MLDRenderSVG
 
@@ -17,7 +17,7 @@ parser.add_argument('--format', choices=('svg', 'dot'), default='svg',
                     help="Format to generate output in")
 parser.add_argument('--output-prefix', action='store', type=str, default='memory',
                     help="Output filename prefix")
-parser.add_argument('dataset', choices=('bbc', 'bbcws', 'riscos'), default='riscos',
+parser.add_argument('dataset', choices=('bbc', 'bbcws', 'riscos', 'labels', 'labelsmiddle'), default='riscos',
                     help="Internal data set to render")
 options = parser.parse_args()
 
@@ -139,6 +139,65 @@ elif example == 'riscos':
 
     sequence.add_discontinuities()
     sequence.add_address_labels(start=True, end=True, size=True)
+
+    renderer = renderer_class(filename)
+    renderer.render(sequence)
+
+elif example == 'labels':
+    # All the label positions
+    sequence = Sequence()
+
+    rownames = ('jt', 'it', 'ic', 'ib', 'jb')
+    colnames = ('elf', 'elm', 'el', 'il', 'ic', 'ir', 'er', 'erm', 'erf')
+
+    address = 0x1000
+
+    # First all the row positions
+    col = 'ic'
+    for row in rownames:
+        region = MemoryRegion(address, 1)
+        region.add_label('(%s, %s)' % (col, row), (col, row))
+        sequence.add_region(region)
+        address -= 1
+
+    sequence.add_region(DiscontinuityRegion(address, 1))
+    address -= 1
+
+    # Now all the column positions
+    row = 'ic'
+    for col in colnames:
+        region = MemoryRegion(address, 1)
+        region.add_label('(%s, %s)' % (col, row), (col, row))
+        sequence.add_region(region)
+        address -= 1
+
+    renderer = renderer_class(filename)
+    renderer.render(sequence)
+
+elif example == 'labelsmiddle':
+    # All the label positions
+    sequence = Sequence()
+
+    rownames = ('it', 'ic', 'ib')
+    colnames = ('il', 'ic', 'ir')
+
+    address = 0x1000
+
+    # All the middle combinations
+    combinations = 1<<(len(rownames) * len(colnames))
+    for index in range(0, combinations):
+        region = MemoryRegion(address, 1)
+        for bit in range(0, len(rownames) * len(colnames)):
+            if not (index & (1<<bit)):
+                continue
+            row = rownames[bit % len(rownames)]
+            col = colnames[int(bit / len(rownames))]
+
+            region.add_label('(%s, %s)' % (col, row), (col, row))
+        sequence.add_region(region)
+        address -= 1
+
+    sequence.add_address_labels(start=True)
 
     renderer = renderer_class(filename)
     renderer.render(sequence)
