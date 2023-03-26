@@ -154,8 +154,7 @@ class SVGRect(SVGElement):
 
         if self.transform:
             attrs.append('transform="{}"'.format(self.transform_attribute()))
-        if self.fill:
-            attrs.append('fill="{}"'.format(self.fill))
+        attrs.append('fill="{}"'.format(self.fill or 'none'))
         if self.stroke:
             attrs.append('stroke="{}"'.format(self.stroke))
         if self.stroke_width:
@@ -209,6 +208,7 @@ class SVGPath(SVGElement):
 class SVGText(SVGElement):
     fontsize = 12
     fontname = 'Optima, Rachana, Sawasdee, sans-serif'
+    bounds_aspect = 0.75
 
     def __init__(self, x, y, string, colour=None, position='cc'):
         super(SVGText, self).__init__()
@@ -240,9 +240,9 @@ class SVGText(SVGElement):
         if ypos == 'c':
             y0 = self.y - height / 2
         elif ypos == 'b':
-            y0 = self.y
-        elif ypos == 't':
             y0 = self.y - height
+        elif ypos == 't':
+            y0 = self.y
 
         x1 = x0 + width
         y1 = y0 + height
@@ -261,10 +261,11 @@ class SVGText(SVGElement):
         # estimate for the bounding box.
         # We return the width in inches, as we have for all the sizes, but font size
         # is based around points, which are measured in 1/72 inch units.
-        # We assume that the characters will be equally spaced squares of the point
-        # size - which is almost never true, but will probably be oversized.
+        # We apply an estimate of the aspect ratio for characters, as most will not be
+        # square at the point size. We will probably still oversize things, but hopefully
+        # not unreasonably.
         longest_line = max(len(line) for line in self.lines)
-        return longest_line * self.fontsize / 72.0
+        return longest_line * self.fontsize / 72.0 * self.bounds_aspect
 
     @property
     def height(self):
@@ -331,6 +332,12 @@ class SVGText(SVGElement):
             s = s.replace('<', '&lt;')
             s = s.replace('>', '&gt;')
             return s
+
+        if False:
+            # Diagnostics: draw a rectangle for our estimated text size.
+            bounds = self.self_bounds
+            rect = SVGRect(bounds.x0, bounds.y0, bounds.x1, bounds.y1, stroke='#F00')
+            rect.write(fh, indent)
 
         # FIXME: Multiline not really supported
         y = self.y
@@ -451,8 +458,8 @@ class MLDRenderSVG(MLDRenderBase):
                 height = min(height, sequence.discontinuity_height)
 
             if isinstance(region, DiscontinuityRegion):
-                stroke = '#000'
-                fill = None
+                stroke = region.outline
+                fill = region.fill
                 xoffset = sequence.unit_height / 6.0
                 ysegmentsize = (height - (xoffset * 2)) / 4.0
 

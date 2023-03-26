@@ -189,13 +189,16 @@ class Sequence(object):
         """
         return self.size_formatter.value(size) if self.size_formatter else self.address_formatter.value(size)
 
-    def add_discontinuities(self):
+    def add_discontinuities(self, fill=None, outline=None):
         new_regions = []
         last_end = None
         for region in self.regions:
             if last_end and last_end != region.address:
                 # This is a region that doesn't butt up to the next one
                 new_region = DiscontinuityRegion(last_end, region.address - last_end)
+                new_region.set_fill_colour(fill)
+                if outline:
+                    new_region.set_outline_colour(outline)
                 new_regions.append(new_region)
             new_regions.append(region)
             last_end = region.end

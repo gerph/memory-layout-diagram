@@ -72,7 +72,7 @@ if example.startswith('bbc'):
     sequence.address_formatter = ValueFormatterAcorn()
     sequence.size_formatter = ValueFormatterAcorn()
 
-    sequence.add_discontinuities()
+    sequence.add_discontinuities(fill=None, outline='#336DA5')
     sequence.add_address_labels(start=True, end=False, size=False, side='left', end_exclusive=False,
                                 final_end=True)
 
