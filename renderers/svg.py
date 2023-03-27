@@ -49,13 +49,13 @@ class SVGElement(object):
             if value == int(value):
                 return "{}in".format(int(value))
             else:
-                return "{:.2f}in".format(value)
+                return "{:.3f}in".format(value)
         else:
             value = value * self.DPI
             if value == int(value):
                 return "{}".format(int(value))
             else:
-                return "{:.2f}".format(value)
+                return "{:.3f}".format(value)
 
     def pixels(self, value):
         value = value * self.DPI
@@ -165,12 +165,13 @@ class SVGRect(SVGElement):
 
 class SVGPath(SVGElement):
 
-    def __init__(self, fill=None, stroke=None, stroke_width=None):
+    def __init__(self, fill=None, stroke=None, stroke_width=None, stroke_pattern='solid'):
         super(SVGPath, self).__init__()
         self.components = []
         self.fill = fill
         self.stroke = stroke
         self.stroke_width = stroke_width
+        self.stroke_pattern = stroke_pattern
 
     def move(self, x, y):
         self.components.append(('M', x, y))
@@ -193,8 +194,21 @@ class SVGPath(SVGElement):
             attrs.append('transform="{}"'.format(self.transform_attribute()))
         attrs.append('fill="{}"'.format(self.fill if self.fill else 'none'))
         attrs.append('stroke="{}"'.format(self.stroke if self.stroke else 'none'))
-        if self.stroke_width:
-            attrs.append('stroke-width="{}"'.format(self.units(self.stroke_width)))
+        if self.stroke:
+            if self.stroke_width:
+                attrs.append('stroke-width="{}"'.format(self.units(self.stroke_width)))
+            if self.stroke_pattern != 'solid':
+                if self.stroke_pattern == 'dotted':
+                    pattern = "{},{}".format(self.units(self.stroke_width * 2),
+                                             self.units(self.stroke_width * 2))
+                elif self.stroke_pattern == 'dashed':
+                    pattern = "{},{}".format(self.units(self.stroke_width * 4),
+                                             self.units(self.stroke_width * 2))
+                else:
+                    pattern = "{},{},{}".format(self.units(self.stroke_width * 4),
+                                                self.units(self.stroke_width * 2),
+                                                self.units(self.stroke_width * 4))
+                attrs.append('stroke-dasharray="{}"'.format(pattern))
 
         path_data = []
         for component in self.components:
@@ -526,6 +540,26 @@ class MLDRenderSVG(MLDRenderBase):
                         path.line(sequence.region_width, y + region.outline_width * 2)
 
                     groups.append(path)
+
+                    if region.outline_lower in ('dotted', 'dashed'):
+                        path = SVGPath(stroke=region.outline,
+                                       stroke_width=region.outline_width,
+                                       stroke_pattern=region.outline_lower)
+
+                        path.move(0, y + height)
+                        path.line(sequence.region_width, y + height)
+
+                        groups.append(path)
+
+                    if region.outline_upper in ('dotted', 'dashed'):
+                        path = SVGPath(stroke=region.outline,
+                                       stroke_width=region.outline_width,
+                                       stroke_pattern=region.outline_upper)
+
+                        path.move(0, y)
+                        path.line(sequence.region_width, y)
+
+                        groups.append(path)
 
             for label in region.labels.values():
                 xpos = label.position[0]

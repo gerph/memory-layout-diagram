@@ -234,6 +234,34 @@ class Sequence(object):
 
             initial = False
 
+    def set_outline_lower(self, address, outline):
+        """
+        Change the outline of the lower boundary of a region.
+        """
+        for index, region in enumerate(self.regions):
+            if region.address == address:
+                region.outline_lower = outline
+                if index != 0:
+                    # If we weren't the first region, we change the region before it to have
+                    # no outline.
+                    self.regions[index - 1].outline_upper = 'solid' if outline == 'solid' else 'none'
+                return
+        raise RuntimeError("Cannot find region for address {}".format(self.address_format(address)))
+
+    def set_outline_upper(self, address, outline):
+        """
+        Change the outline of the upper boundary of a region.
+        """
+        for index, region in enumerate(self.regions):
+            if region.address == address:
+                region.outline_upper = outline
+                if index != len(self.regions) - 1:
+                    # If we weren't the last region, we change the region after it to have
+                    # no outline.
+                    self.regions[index + 1].outline_lower = 'solid' if outline == 'solid' else 'none'
+                return
+        raise RuntimeError("Cannot find region for address {}".format(self.address_format(address)))
+
 
 class MultipleMaps(object):
 

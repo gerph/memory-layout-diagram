@@ -95,9 +95,12 @@ if example.startswith('bbc'):
     # Replace the address label
     region.add_label("&7FFF", ('el', 'jt'))
     region = sequence.find_region(0x8000)
-    region.outline_lower = 'double'
     region.remove_label(('el', 'jb'))
     region.add_label('Paged ROMs', ('erm', 'ic'))
+    region.outline_lower = 'double'     # Change the junction to be double
+
+    # Make the BASIC region dashed
+    sequence.set_outline_lower(0x1900, 'dashed')
 
     # Workspace
     ws_sequence = Sequence()
