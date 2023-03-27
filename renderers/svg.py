@@ -179,12 +179,19 @@ class SVGPath(SVGElement):
     def line(self, x, y):
         self.components.append(('L', x, y))
 
+    def bezier(self, cx0, xy0, cx1, cy1, x1, y1):
+        self.components.append(('C', cx0, xy0, cx1, cy1, x1, y1))
+
     @property
     def self_bounds(self):
         bounds = Bounds()
         for component in self.components:
             if len(component) == 3:
                 bounds += (component[1], component[2])
+            if len(component) == 7:
+                bounds += (component[1], component[2])
+                bounds += (component[3], component[4])
+                bounds += (component[5], component[6])
         return bounds
 
     def write_self(self, fh, indent):
@@ -214,6 +221,10 @@ class SVGPath(SVGElement):
         for component in self.components:
             if len(component) == 3:
                 path_data.extend((component[0], self.pixels(component[1]), self.pixels(component[2])))
+            if len(component) == 7:
+                path_data.extend((component[0], self.pixels(component[1]), self.pixels(component[2]),
+                                                self.pixels(component[3]), self.pixels(component[4]),
+                                                self.pixels(component[5]), self.pixels(component[6])))
         attrs.append('d="{}"'.format(' '.join(path_data)))
 
         fh.write(indent + "<path {}/>\n".format(" ".join(attrs)))
@@ -454,6 +465,115 @@ class MLDRenderSVG(MLDRenderBase):
         self.groups.write(self.fh)
         self.footer()
 
+    def render_discontinuity(self, sequence, groups, region, y, height):
+        stroke = region.outline
+        fill = region.fill
+        if region.discontinuity_style in ('zig-zag', 'default'):
+            # Zig-zag discontinuity
+            xoffset = sequence.unit_height / 6.0
+            ysegmentsize = (height - (xoffset * 2)) / 4.0
+
+            for path_pass in range(0 if fill else 1, 2):
+                if path_pass == 0:
+                    path = SVGPath(fill=fill)
+                else:
+                    path = SVGPath(stroke=stroke,
+                                   stroke_width=region.outline_width)
+                path.move(0, y)
+                path.line(0, y + xoffset)
+                path.line(-xoffset, y + xoffset + ysegmentsize * 1)
+                path.line(0, y + xoffset + ysegmentsize * 2)
+                path.line(+xoffset, y + xoffset + ysegmentsize * 3)
+                path.line(0, y + height - xoffset)
+                path.line(0, y + height)
+
+                if path_pass == 0:
+                    path.line(sequence.region_width, y + height)
+                else:
+                    path.move(sequence.region_width, y + height)
+                path.line(sequence.region_width, y + height - xoffset)
+                path.line(sequence.region_width + xoffset, y + xoffset + ysegmentsize * 3)
+                path.line(sequence.region_width, y + xoffset + ysegmentsize * 2)
+                path.line(sequence.region_width - xoffset, y + xoffset + ysegmentsize * 1)
+                path.line(sequence.region_width, y + xoffset)
+                path.line(sequence.region_width, y)
+
+                groups.append(path)
+
+        elif region.discontinuity_style == 'cut-out':
+            # cut-out line
+            #  _ |
+            # / \|
+            #  _  \_/
+            # / \
+            #    |\_/
+            #    |
+            xoffset = sequence.unit_height / 6.0
+            ysegmentsize = (height - (xoffset * 1)) / 2.0
+
+            if fill:
+                path = SVGPath(fill=fill)
+                # Upper section
+                path.move(0, y)
+                path.line(0, y + ysegmentsize)
+                path.bezier(xoffset, y + ysegmentsize + xoffset,
+                            xoffset * 2, y + ysegmentsize + xoffset,
+                            xoffset * 3, y + ysegmentsize)
+
+                path.bezier(xoffset * 4, y + ysegmentsize - xoffset,
+                            sequence.region_width - xoffset * 4, y + ysegmentsize + xoffset,
+                            sequence.region_width - xoffset * 3, y + ysegmentsize)
+
+                path.bezier(sequence.region_width - xoffset * 2, y + ysegmentsize - xoffset,
+                            sequence.region_width - xoffset, y + ysegmentsize - xoffset,
+                            sequence.region_width, y + ysegmentsize)
+                path.line(sequence.region_width, y)
+
+                # Lower section
+                path.move(0, y + height)
+                path.line(0, y + height - ysegmentsize)
+                path.bezier(xoffset, y + height - ysegmentsize + xoffset,
+                            xoffset * 2, y + height - ysegmentsize + xoffset,
+                            xoffset * 3, y + height - ysegmentsize)
+
+                path.bezier(xoffset * 4, y + height - ysegmentsize - xoffset,
+                            sequence.region_width - xoffset * 4, y + height - ysegmentsize + xoffset,
+                            sequence.region_width - xoffset * 3, y + height - ysegmentsize)
+                path.bezier(sequence.region_width - xoffset * 2, y + height - ysegmentsize - xoffset,
+                            sequence.region_width - xoffset, y + height - ysegmentsize - xoffset,
+                            sequence.region_width, y + height - ysegmentsize)
+                path.line(sequence.region_width, y + height)
+
+                groups.append(path)
+
+            path = SVGPath(stroke=stroke,
+                           stroke_width=region.outline_width)
+
+            for xbase in (0, sequence.region_width):
+                # Upper left
+                path.move(xbase, y)
+                path.line(xbase, y + ysegmentsize)
+                path.move(xbase - xoffset * 3, y + ysegmentsize)
+                path.bezier(xbase - xoffset * 2, y + ysegmentsize - xoffset,
+                            xbase - xoffset, y + ysegmentsize - xoffset,
+                            xbase, y + ysegmentsize)
+                path.bezier(xbase + xoffset, y + ysegmentsize + xoffset,
+                            xbase + xoffset * 2, y + ysegmentsize + xoffset,
+                            xbase + xoffset * 3, y + ysegmentsize)
+
+                # Lower left
+                path.move(xbase, y + height)
+                path.line(xbase, y + height - ysegmentsize)
+                path.move(xbase - xoffset * 3, y + height - ysegmentsize)
+                path.bezier(xbase - xoffset * 2, y + height - ysegmentsize - xoffset,
+                            xbase - xoffset, y + height - ysegmentsize - xoffset,
+                            xbase, y + height - ysegmentsize)
+                path.bezier(xbase + xoffset, y + height - ysegmentsize + xoffset,
+                            xbase + xoffset * 2, y + height - ysegmentsize + xoffset,
+                            xbase + xoffset * 3, y + height - ysegmentsize)
+
+            groups.append(path)
+
     def render_sequence(self, sequence):
 
         groups = SVGGroup()
@@ -472,37 +592,8 @@ class MLDRenderSVG(MLDRenderBase):
                 height = min(height, sequence.discontinuity_height)
 
             if isinstance(region, DiscontinuityRegion):
-                stroke = region.outline
-                fill = region.fill
-                xoffset = sequence.unit_height / 6.0
-                ysegmentsize = (height - (xoffset * 2)) / 4.0
+                self.render_discontinuity(sequence, groups, region, y, height)
 
-                for path_pass in range(0 if fill else 1, 2):
-                    if path_pass == 0:
-                        path = SVGPath(fill=fill)
-                    else:
-                        path = SVGPath(stroke=stroke,
-                                       stroke_width=region.outline_width)
-                    path.move(0, y)
-                    path.line(0, y + xoffset)
-                    path.line(-xoffset, y + xoffset + ysegmentsize * 1)
-                    path.line(0, y + xoffset + ysegmentsize * 2)
-                    path.line(+xoffset, y + xoffset + ysegmentsize * 3)
-                    path.line(0, y + height - xoffset)
-                    path.line(0, y + height)
-
-                    if path_pass == 0:
-                        path.line(sequence.region_width, y + height)
-                    else:
-                        path.move(sequence.region_width, y + height)
-                    path.line(sequence.region_width, y + height - xoffset)
-                    path.line(sequence.region_width + xoffset, y + xoffset + ysegmentsize * 3)
-                    path.line(sequence.region_width, y + xoffset + ysegmentsize * 2)
-                    path.line(sequence.region_width - xoffset, y + xoffset + ysegmentsize * 1)
-                    path.line(sequence.region_width, y + xoffset)
-                    path.line(sequence.region_width, y)
-
-                    groups.append(path)
             else:
                 if region.outline_lower == 'solid' and region.outline_upper == 'solid':
                     groups.append(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,

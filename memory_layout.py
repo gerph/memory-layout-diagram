@@ -78,7 +78,7 @@ class MemoryRegion(object):
 
 
 class DiscontinuityRegion(MemoryRegion):
-    pass
+    discontinuity_style = 'default'
 
 
 class ValueFormatter(object):
