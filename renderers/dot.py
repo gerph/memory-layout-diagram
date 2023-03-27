@@ -74,6 +74,15 @@ class MLDRenderGraphviz(MLDRenderBase):
             s = s.replace('\n', '<br/>')
             return s
 
+        def font_and_escape(label):
+            if not label:
+                return ''
+            escaped = escape(label)
+            if label.colour and escaped:
+                return '<font color="%s">%s</font>' % (self.expand_colour(label.colour),
+                                                       escaped)
+            return escaped
+
         for rownumber, rowkey in enumerate(rowkeys):
             collabels = list(labels.get((colkey, rowkey), None) for colkey in colkeys)
             used = (bool(collabels[0]) * 4) + (bool(collabels[1]) * 2) + (bool(collabels[2]) * 1)
@@ -87,15 +96,15 @@ class MLDRenderGraphviz(MLDRenderBase):
             if used == 0b001:
                 # Just right aligned
                 row = '<td colspan="3" align="right" valign="{}" width="{}" height="{}">{}</td>'.format(valign, cellwidth, cellheight,
-                                                                                                        escape(labels[(colkeys[2], rowkey)]))
+                                                                                                        font_and_escape(labels[(colkeys[2], rowkey)]))
             elif used == 0b010:
                 # Just centred
                 row = '<td colspan="3" align="center" valign="{}" width="{}" height="{}">{}</td>'.format(valign, cellwidth, cellheight,
-                                                                                                         escape(labels[(colkeys[1], rowkey)]))
+                                                                                                         font_and_escape(labels[(colkeys[1], rowkey)]))
             elif used == 0b100:
                 # Just left aligned
                 row = '<td colspan="3" align="left" valign="{}" width="{}" height="{}">{}</td>'.format(valign, cellwidth, cellheight,
-                                                                                                       escape(labels[(colkeys[0], rowkey)]))
+                                                                                                       font_and_escape(labels[(colkeys[0], rowkey)]))
             elif used == 0b000:
                 # Nothing
                 row = '<td colspan="3" align="center" valign="{}" width="{}" height="{}"></td>'.format(valign, cellwidth, cellheight)
@@ -103,16 +112,16 @@ class MLDRenderGraphviz(MLDRenderBase):
             elif used == 0b101:
                 # Left and right aligned
                 row = '<td colspan="2" align="left" valign="{}" height="{}">{}</td>'.format(valign, cellheight,
-                                                                                            escape(labels[(colkeys[0], rowkey)]))
+                                                                                            font_and_escape(labels[(colkeys[0], rowkey)]))
                 row += '<td align="right" valign="{}" height="{}">{}</td>'.format(valign, cellheight,
-                                                                                  escape(labels[(colkeys[2], rowkey)]))
+                                                                                  font_and_escape(labels[(colkeys[2], rowkey)]))
             else:
                 row = '<td align="left" valign="{}" height="{}">{}</td>'.format(valign, cellheight,
-                                                                                escape(labels.get((colkeys[0], rowkey), None)))
+                                                                                font_and_escape(labels.get((colkeys[0], rowkey), None)))
                 row += '<td align="center" valign="{}" height="{}">{}</td>'.format(valign, cellheight,
-                                                                                   escape(labels.get((colkeys[1], rowkey), None)))
+                                                                                   font_and_escape(labels.get((colkeys[1], rowkey), None)))
                 row += '<td align="right" valign="{}" height="{}">{}</td>'.format(valign, cellheight,
-                                                                                  escape(labels.get((colkeys[2], rowkey), None)))
+                                                                                  font_and_escape(labels.get((colkeys[2], rowkey), None)))
             rows.append("<tr>{}</tr>".format(row))
 
         return '<table cellborder="0" cellspacing="0" cellpadding="%s" border="0" fixedsize="false" color="blue" height="%.2f" width="%.2f">%s</table>' \
@@ -130,7 +139,8 @@ digraph memory {{
     node [
         shape=rect,
         penwidth=2,
-        fontname="{}"
+        fontname="{}",
+        fontsize = 12
     ];
     edge [
         fontname="{}",
@@ -208,8 +218,13 @@ RIGHT
                 same = same.replace('RIGHT\n', region_right)
                 self.write(same)
 
+            style = []
             if isinstance(region, DiscontinuityRegion):
-                self.write('    region%s%08x [ style=dashed ];\n' % (identifier, region.address))
+                if region.discontinuity_style in ('dotted', 'dashed'):
+                    style.append(region.discontinuity_style)
+                else:
+                    style.append('dashed')
+
             self.write('    region%s%08x [ width=%.2f, height=%.2f, fixedsize=true ];\n' % (identifier, region.address,
                                                                                             sequence.region_width, height))
 
@@ -230,10 +245,11 @@ RIGHT
                 text = label.label
                 text = text.replace('\\', '\\\\')
                 text = text.replace('\n', labeljust or '\\n')
-                self.write('    region%s%08x [ label="%s%s", labelloc=%s ];\n' % (identifier, region.address,
-                                                                                  text,
-                                                                                  labeljust,
-                                                                                  label.position[1][1]))
+                self.write('    region%s%08x [ label="%s%s", labelloc=%s%s ];\n' % (identifier, region.address,
+                                                                                    text,
+                                                                                    labeljust,
+                                                                                    label.position[1][1],
+                                                                                    ', fontcolor="%s"' % (label.colour,) if label.colour else ''))
             else:
                 # Multiple labels.
                 # We turn them into a table.
@@ -241,14 +257,16 @@ RIGHT
                 self.write('    region%s%08x [ label=<%s> labelloc=c labeljust=c ];\n'
                             % (identifier, region.address, table))
 
-            if region.fill or region.outline:
+            if region.fill or region.outline or style:
                 attrs = []
                 if region.fill:
                     attrs.append('fillcolor="{}"'.format(self.expand_colour(region.fill)))
-                    attrs.append('style=filled')
+                    style.append('filled')
                 if region.outline:
                     attrs.append('color="{}"'.format(self.expand_colour(region.outline)))
-                attrs.append('penwidth="{}"'.format(region.outline_width * 72))
+                    attrs.append('penwidth="{}"'.format(region.outline_width * 72))
+                if style:
+                    attrs.append('style="{}"'.format(','.join(style)))
                 self.write('    region%s%08x [ %s ];\n' % (identifier, region.address,
                                                            ', '.join(attrs)))
 

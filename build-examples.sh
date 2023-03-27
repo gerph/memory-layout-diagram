@@ -4,8 +4,12 @@
 
 set -e
 
-datasets=(bbc bbcws riscos)
+datasets=(elite-bbc bbc bbcws riscos)
 formats=(dot svg)
+
+if [[ "$1" == '--all' ]] ; then
+    datasets+=(discontinuities labels)
+fi
 
 for dataset in "${datasets[@]}" ; do
     for format in "${formats[@]}" ; do

@@ -29,13 +29,17 @@ class RegionLabel(object):
         `jb` - at the bottom region junction
     """
 
-    def __init__(self, label, position):
+    def __init__(self, label, position, colour=None):
         self.label = label
         self.position = position
 
+        # Presentational properties
+        self.colour = colour
+
     def __repr__(self):
-        return "<{}(position={!r}, label={!r}>".format(self.__class__.__name__,
-                                                       self.position, self.label)
+        return "<{}(position={!r}, label={!r}, colour={!r}>".format(self.__class__.__name__,
+                                                                    self.position, self.label,
+                                                                    self.colour)
 
     def __str__(self):
         return self.label
@@ -60,8 +64,8 @@ class MemoryRegion(object):
         return "<{}(&{:08x} + &{:08x})>".format(self.__class__.__name__,
                                                 self.address, self.size)
 
-    def add_label(self, label, position=('ic', 'ic')):
-        self.labels[position] = RegionLabel(label, position)
+    def add_label(self, label, position=('ic', 'ic'), colour=None):
+        self.labels[position] = RegionLabel(label, position, colour=colour)
 
     def remove_label(self, position=('ic', 'ic')):
         if position in self.labels:
@@ -79,6 +83,9 @@ class MemoryRegion(object):
 
 class DiscontinuityRegion(MemoryRegion):
     discontinuity_style = 'default'
+
+    def set_style(self, style):
+        self.discontinuity_style = style
 
 
 class ValueFormatter(object):
@@ -191,13 +198,14 @@ class Sequence(object):
         """
         return self.size_formatter.value(size) if self.size_formatter else self.address_formatter.value(size)
 
-    def add_discontinuities(self, fill=None, outline=None):
+    def add_discontinuities(self, fill=None, outline=None, style='default'):
         new_regions = []
         last_end = None
         for region in self.regions:
             if last_end and last_end != region.address:
                 # This is a region that doesn't butt up to the next one
                 new_region = DiscontinuityRegion(last_end, region.address - last_end)
+                new_region.set_style(style)
                 new_region.set_fill_colour(fill)
                 if outline:
                     new_region.set_outline_colour(outline)

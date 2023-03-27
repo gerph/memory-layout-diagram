@@ -17,7 +17,9 @@ parser.add_argument('--format', choices=('svg', 'dot'), default='svg',
                     help="Format to generate output in")
 parser.add_argument('--output-prefix', action='store', type=str, default='memory',
                     help="Output filename prefix")
-parser.add_argument('dataset', choices=('bbc', 'bbcws', 'riscos', 'labels', 'labelsmiddle'), default='riscos',
+parser.add_argument('dataset', choices=('bbc', 'bbcws', 'riscos', 'elite-bbc',
+                                        'labels', 'labelsmiddle',
+                                        'discontinuities'), default='riscos',
                     help="Internal data set to render")
 options = parser.parse_args()
 
@@ -72,7 +74,7 @@ if example.startswith('bbc'):
     sequence.address_formatter = ValueFormatterAcorn()
     sequence.size_formatter = ValueFormatterAcorn()
 
-    sequence.add_discontinuities(fill=None, outline='#336DA5')
+    sequence.add_discontinuities(fill=None, outline='#336DA5', style='zig-zag')
     sequence.add_address_labels(start=True, end=False, size=False, side='left', end_exclusive=False,
                                 final_end=True)
 
@@ -142,6 +144,54 @@ if example.startswith('bbc'):
         renderer = renderer_class(filename)
         renderer.render(sequence)
 
+elif example.startswith('elite-bbc'):
+    # BBC memory map for Elite, from https://www.bbcelite.com/deep_dives/the_elite_memory_map.html
+    memory = [
+            (0x0000, 0x0100, "Zero page workspace",             "&0000 = ZP"),
+            (0x0100, 0x0040, "Heap space ascends from XX3",     "&0100 = XX3"),
+            (0x01C0, 0x0040, "6502 stack descends from &01FF",  ""),
+            (0x0200, 0x0100, "MOS general workspace",           "&0200"),
+            (0x0300, 0x0072, "T% workspace",                    "&0300 = T%"),
+            (0x0372, 0x008E, "MOS tape filing system workspace", "&0372"),
+            (0x0400, 0x0400, "Recursive tokens (WORDS9.bin)",   "&0400 = QQ18"),
+            (0x0800, 0x0100, "MOS sound/printer workspace",     "&0800"),
+            (0x0900, 0x0200, "Ship data blocks ascend from K%", "&0900 = K%"),
+            (0x0C00, 0x0140, "Ship data blocks descend from WP", "SLSP"),
+            (0x0D40, 0x01F4, "WP workspace",                    "&0D40 = WP"),
+            (0x0F34, 0x000C, "&0F34-&F3F unused",               "&0F34"),
+            (0x0F40, 0x46FA, "Main game code (ELTcode.bin)",    "&0F40 = S%"),
+            (0x563A, 0x09C6, "Ship blueprints (SHIPS.bin)",     "&563A = XX21"),
+            (0x6000, 0x1F00, "Memory for split screen",         "&6000"),
+            (0x7F00, 0x0100, "Python blueprint (PYTHON.bin)",   "&7F00"),
+            (0x8000, 0x4000, "Paged ROMs",                      "&8000"),
+            (0xC000, 0x4000, "Machine Operating System (MOS)",  "&C000"),
+        ]
+    sequence = Sequence()
+    sequence.unit_size = 0x100
+    sequence.unit_height = 0.5
+    sequence.region_min_height = 0.5
+    sequence.region_max_height = sequence.region_min_height * 1.5
+    sequence.discontinuity_height = 2
+    sequence.region_width = 2.75
+    sequence.document_bgcolour = '#000'
+
+    for (address, size, name, label) in memory:
+        region = MemoryRegion(address, size)
+        region.add_label(name, ('il', 'ic'), colour='#90EE90')
+        region.add_label(label, ('er', 'ib'), colour='#90EE90')
+        region.set_fill_colour('#000000')
+        region.set_outline_colour('#90EE90')
+        sequence.add_region(region)
+
+    sequence.address_formatter = ValueFormatterAcorn()
+    sequence.size_formatter = ValueFormatterAcorn()
+
+    sequence.add_discontinuities(fill=None, outline='#90EE90', style='dashed')
+    sequence.add_address_labels(start=False, end=False, size=False, side='right', end_exclusive=False,
+                                final_end=True)
+    renderer = renderer_class(filename)
+    renderer.render(sequence)
+
 elif example == 'riscos':
     memory = [
             (0x00000000, 0x00008000, 48, "Zero Page"),
@@ -156,6 +206,7 @@ elif example == 'riscos':
             (0xffff0000, 0x00010000, 49, "Exception vectors"),
         ]
     sequence = Sequence()
+    sequence.region_max_height = sequence.region_min_height
 
     for (address, size, danum, name) in memory:
         region = MemoryRegion(address, size)
@@ -227,6 +278,38 @@ elif example == 'labelsmiddle':
         address -= 1
 
     sequence.add_address_labels(start=True)
+
+    renderer = renderer_class(filename)
+    renderer.render(sequence)
+
+elif example == 'discontinuities':
+    # All the discontinuity styles
+    sequence = Sequence()
+
+    styles = ('default', 'zig-zag', 'cut-out', 'dotted', 'dashed')
+
+    address = 0x1000
+
+    region = MemoryRegion(address, 1)
+    region.set_fill_colour('#C7E3EC')
+    region.set_outline_colour('#336DA5')
+    sequence.add_region(region)
+    address -= 1
+
+    for style in styles:
+        region = DiscontinuityRegion(address, 1)
+        region.set_style(style)
+        region.set_fill_colour('#CCCCCC')
+        region.set_outline_colour('#336DA5')
+        region.add_label(style)
+        sequence.add_region(region)
+        address -= 1
+
+        region = MemoryRegion(address, 1)
+        region.set_fill_colour('#C7E3EC')
+        region.set_outline_colour('#336DA5')
+        sequence.add_region(region)
+        address -= 1
 
     renderer = renderer_class(filename)
     renderer.render(sequence)

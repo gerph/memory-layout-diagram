@@ -289,6 +289,8 @@ class SVGText(SVGElement):
         # We apply an estimate of the aspect ratio for characters, as most will not be
         # square at the point size. We will probably still oversize things, but hopefully
         # not unreasonably.
+        if not self.lines:
+            return 0
         longest_line = max(len(line) for line in self.lines)
         return longest_line * self.fontsize / 72.0 * self.bounds_aspect
 
@@ -343,7 +345,7 @@ class SVGText(SVGElement):
         if self.transform:
             attrs.append('transform="{}"'.format(self.transform_attribute()))
         if self.colour:
-            styles.append(('color', self.colour))
+            attrs.append('fill="{}"'.format(self.colour))
 
         if styles:
             style = ' '.join("{}: {};".format(prop, value) for prop, value in styles)
@@ -574,6 +576,39 @@ class MLDRenderSVG(MLDRenderBase):
 
             groups.append(path)
 
+        elif region.discontinuity_style in ('dotted', 'dashed'):
+
+            # First fill the inside of the region
+            if fill:
+                groups.append(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
+                                      fill=fill,
+                                      stroke=None))
+
+            # Now draw the top and bottom as solids
+            if region.outline_upper == 'solid' or region.outline_lower == 'solid':
+                path = SVGPath(stroke=stroke,
+                               stroke_width=region.outline_width)
+                if region.outline_upper == 'solid':
+                    path.move(0, y)
+                    path.line(sequence.region_width, y)
+
+                if region.outline_lower == 'solid':
+                    path.move(0, y + height)
+                    path.line(sequence.region_width, y + height)
+
+                groups.append(path)
+
+            path = SVGPath(stroke=stroke,
+                           stroke_width=region.outline_width,
+                           stroke_pattern=region.discontinuity_style)
+            path.move(0, y)
+            path.line(0, y + height)                            # Down the left
+
+            path.move(sequence.region_width, y + height)
+            path.line(sequence.region_width, y)                 # Up the right
+
+            groups.append(path)
+
     def render_sequence(self, sequence):
 
         groups = SVGGroup()
@@ -712,9 +747,9 @@ class MLDRenderSVG(MLDRenderBase):
                     print("Unrecognised y position '{}'".format(ypos))
                     pos += 'c'
 
-                #print("Position %r => %r, %f, %f (%r)" % (label.position, pos, lx, ly - y, label.label))
+                #print("Position %r => %r, %f, %f (%r)" % (label.position, pos, lx, ly - y, label))
 
-                groups.append(SVGText(lx, ly, label.label, position=pos))
+                groups.append(SVGText(lx, ly, label.label, position=pos, colour=label.colour))
 
             y += height
 
