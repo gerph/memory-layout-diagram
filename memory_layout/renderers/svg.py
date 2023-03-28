@@ -5,7 +5,7 @@ SVG renderer for the memory layout diagrams.
 import io
 
 from memory_layout import Sequence, MemoryRegion, DiscontinuityRegion
-from structs import Bounds, Transform, Matrix, Translate
+from memory_layout.structs import Bounds, Transform, Matrix, Translate
 
 from . import MLDRenderBase
 

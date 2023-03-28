@@ -8,8 +8,8 @@ import os
 import sys
 
 from memory_layout import Sequence, MemoryRegion, DiscontinuityRegion, ValueFormatterAcorn, ValueFormatterSI
-from renderers.dot import MLDRenderGraphviz
-from renderers.svg import MLDRenderSVG
+from memory_layout.renderers.dot import MLDRenderGraphviz
+from memory_layout.renderers.svg import MLDRenderSVG
 
 
 parser = argparse.ArgumentParser(usage="%s [<options>] <dataset>" % (os.path.basename(sys.argv[0]),))
