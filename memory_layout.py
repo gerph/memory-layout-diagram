@@ -242,33 +242,68 @@ class Sequence(object):
 
             initial = False
 
+    def match_address(self, address):
+        """
+        Find a matching addess and report the region, OR report all regions
+
+        @param address:     Address to match, or None to report all regions
+        """
+
+        for index, region in enumerate(self.regions):
+            if region.address == address or address is None:
+                yield (index, region)
+                if address is not None:
+                    return
+        if address is not None:
+            raise RuntimeError("Cannot find region for address {}".format(self.address_format(address)))
+
+    def set_outline_colour(self, address, colour):
+        """
+        Change the outline colour of a region (or all regions)
+
+        @param address:     Address to change, or None to change all regions
+        @param colour:      Outline colour
+        """
+        for index, region in self.match_address(address):
+            region.set_outline_colour(colour)
+
+    def set_fill_colour(self, address, colour):
+        """
+        Change the fill colour of a region (or all regions)
+
+        @param address:     Address to change, or None to change all regions
+        @param colour:      Full colour
+        """
+        for index, region in self.match_address(address):
+            region.set_fill_colour(colour)
+
     def set_outline_lower(self, address, outline):
         """
-        Change the outline of the lower boundary of a region.
+        Change the outline of the lower boundary of a region (or all regions)
+
+        @param address:     Address to change, or None to change all regions
+        @param outline:     Outline type
         """
-        for index, region in enumerate(self.regions):
-            if region.address == address:
-                region.outline_lower = outline
-                if index != 0:
-                    # If we weren't the first region, we change the region before it to have
-                    # no outline.
-                    self.regions[index - 1].outline_upper = 'solid' if outline == 'solid' else 'none'
-                return
-        raise RuntimeError("Cannot find region for address {}".format(self.address_format(address)))
+        for index, region in self.match_address(address):
+            region.outline_lower = outline
+            if index != 0:
+                # If we weren't the first region, we change the region before it to have
+                # no outline.
+                self.regions[index - 1].outline_upper = 'solid' if outline == 'solid' else 'none'
 
     def set_outline_upper(self, address, outline):
         """
         Change the outline of the upper boundary of a region.
+
+        @param address:     Address to change, or None to change all regions
+        @param outline:     Outline type
         """
-        for index, region in enumerate(self.regions):
-            if region.address == address:
-                region.outline_upper = outline
-                if index != len(self.regions) - 1:
-                    # If we weren't the last region, we change the region after it to have
-                    # no outline.
-                    self.regions[index + 1].outline_lower = 'solid' if outline == 'solid' else 'none'
-                return
-        raise RuntimeError("Cannot find region for address {}".format(self.address_format(address)))
+        for index, region in self.match_address(address):
+            region.outline_upper = outline
+            if index != len(self.regions) - 1:
+                # If we weren't the last region, we change the region after it to have
+                # no outline.
+                self.regions[index + 1].outline_lower = 'solid' if outline == 'solid' else 'none'
 
 
 class MultipleMaps(object):
