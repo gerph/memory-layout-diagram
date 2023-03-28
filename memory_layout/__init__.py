@@ -238,13 +238,13 @@ class Sequence(object):
             final = (index == len(self.regions) - 1)
             if (start or (initial and initial_start)) and region.address not in omit:
                 address_string = self.address_format(region.address)
-                region.add_label(address_string, (xpos[0], 'ib' if initial else 'jb'))
+                region.add_label(address_string, (xpos[0], 'ib' if initial or (start and end) else 'jb'))
             if (end or (final and final_end)) and region.address + region.size not in omit:
                 address = region.address + region.size
                 if not end_exclusive:
                     address -= 1
                 address_string = self.address_format(address)
-                region.add_label(address_string, (xpos[0], 'it' if final else 'jt'))
+                region.add_label(address_string, (xpos[0], 'it' if final or (start and end) else 'jt'))
 
             if size:
                 size_string = self.size_format(region.size)

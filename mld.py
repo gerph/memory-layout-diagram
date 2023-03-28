@@ -30,6 +30,7 @@ class Defaults(object):
     colour = None
     fill = None
     outline = None
+    outline_width = 2.0 / 72
     position = 'c'
 
 
@@ -86,6 +87,20 @@ def decode_formatter(format_name):
     return cls()
 
 
+def decode_distance(distance):
+    """
+    Decode a distance that might be a string.
+
+    By default discances are in inches, but it's useful to be able to specify them in points.
+    """
+    if isinstance(distance, (int, float)):
+        return distance
+    if distance.endswith('pt'):
+        distance = distance[:-2].strip()
+        distance = float(distance) / 72
+    return distance
+
+
 parser = argparse.ArgumentParser(usage="%s [<options>] <input>" % (os.path.basename(sys.argv[0]),))
 parser.add_argument('input', action='store',
                     help="Input MLD file")
@@ -128,19 +143,19 @@ with open(options.input, 'r') as fh:
             sequence.unit_size = mlddefaults['unit_size']
 
         if 'unit_height' in mlddefaults:
-            sequence.unit_height = mlddefaults['unit_height']
+            sequence.unit_height = decode_distance(mlddefaults['unit_height'])
 
         if 'min_height' in mlddefaults:
-            sequence.region_min_height = mlddefaults['min_height']
+            sequence.region_min_height = decode_distance(mlddefaults['min_height'])
 
         if 'max_height' in mlddefaults:
-            sequence.region_max_height = mlddefaults['max_height']
+            sequence.region_max_height = decode_distance(mlddefaults['max_height'])
 
         if 'discontinuity_height' in mlddefaults:
-            sequence.discontinuity_height = mlddefaults['discontinuity_height']
+            sequence.discontinuity_height = decode_distance(mlddefaults['discontinuity_height'])
 
         if 'region_width' in mlddefaults:
-            sequence.region_width = mlddefaults['region_width']
+            sequence.region_width = decode_distance(mlddefaults['region_width'])
 
         # Presentation options
         if 'background' in mlddefaults:
@@ -151,6 +166,9 @@ with open(options.input, 'r') as fh:
 
         if 'outline' in mlddefaults:
             defaults.outline = mlddefaults['outline']
+
+        if 'outline_width' in mlddefaults:
+            defaults.outline_width = mlddefaults['outline_width']
 
         if 'colour' in mlddefaults:
             defaults.colour = mlddefaults['colour']
@@ -194,6 +212,10 @@ with open(options.input, 'r') as fh:
     reset_junctions = []
 
     for (address, config) in ordered_layout:
+        if isinstance(config, str):
+            config = {
+                    'label': config
+                }
         is_discontinuity = config.get('discontinuity', False)
 
         # The core region type
@@ -210,6 +232,10 @@ with open(options.input, 'r') as fh:
         colour = config.get('outline', defaults.outline)
         if colour:
             region.set_outline_colour(colour)
+
+        width = config.get('outline_width', defaults.outline_width)
+        if width:
+            region.set_outline_width(decode_distance(width))
 
         junction_type = config.get('junction_low', None)
         if junction_type:

@@ -688,6 +688,19 @@ class MLDRenderSVG(MLDRenderBase):
 
                         groups.append(path)
 
+                    if region.outline_lower == 'ticks':
+                        path = SVGPath(stroke=region.outline,
+                                       stroke_width=region.outline_width)
+                        ticksize = sequence.region_width / 8.0
+
+                        path.move(0, y + height)
+                        path.line(ticksize, y + height)
+
+                        path.move(sequence.region_width, y + height)
+                        path.line(sequence.region_width - ticksize, y + height)
+
+                        groups.append(path)
+
                     if region.outline_upper in ('dotted', 'dashed'):
                         path = SVGPath(stroke=region.outline,
                                        stroke_width=region.outline_width,
@@ -695,6 +708,19 @@ class MLDRenderSVG(MLDRenderBase):
 
                         path.move(0, y)
                         path.line(sequence.region_width, y)
+
+                        groups.append(path)
+
+                    if region.outline_upper == 'ticks':
+                        path = SVGPath(stroke=region.outline,
+                                       stroke_width=region.outline_width)
+                        ticksize = sequence.region_width / 12.0
+
+                        path.move(0, y)
+                        path.line(ticksize, y)
+
+                        path.move(sequence.region_width, y)
+                        path.line(sequence.region_width - ticksize, y)
 
                         groups.append(path)
 

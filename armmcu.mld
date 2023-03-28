@@ -1,0 +1,69 @@
+---
+# Based on diagram at: https://scienceprog.com/arm-mcu-memory-map/
+defaults:
+  # Layout options
+  unit_size: 0x10000000
+  unit_height: 0.325
+  min_height: 0.325
+  max_height: 2
+  discontinuity_height: 0.625
+  region_width: 3
+
+  # Presentation options
+  background: "#fff"
+
+  # Address labels
+  address_format: c
+  size_format: si
+
+layout:
+  0x00000000:
+    label: "On-Chip Non-Volatile Memory"
+    labels:
+      "el,ib": "0.0 GB"
+  0x10000000:
+    size: 0x2FFF8000
+    label: "Reserved for\nOn Chip Memory"
+  0x3FFF8000:
+    size: 0x8000
+    label: "On-Chip Non-Volatile Memory"
+  0x40000000:
+    label: "On-Chip Static RAM"
+    labels:
+      "el,jb": "1.0 GB"
+  0x50000000:
+    size: 0x20000000
+    label: "Reserved for On-Chip Memory"
+  0x70000000: "Boot block"
+  0x80000000:
+    size: 0x40000000
+    label: "Reserved for\nExternal Memory"
+    labels:
+      "el,jb": "2.0 GB"
+  0xC0000000:
+    size: 0x20000000
+    label: ""
+    labels:
+      "el,jb": "3.0 GB"
+    junction_low: "ticks"
+  0xE0000000:
+    label: "VPB Peripherals"
+    labels:
+      "el,jb": "3.5 GB"
+  0xF0000000:
+    label: "AHB Peripherals"
+    labels:
+      "el,jb": "3.75 GB"
+      "el,it": "4.0 GB"
+
+automatic:
+  addresses:
+    side: right
+    start: true
+    end: false
+    final_end: true
+    end_exclusive: false
+    omit:
+      - 0x10000000
+      - 0x50000000
+      - 0x70000000
