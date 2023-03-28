@@ -1,0 +1,107 @@
+---
+defaults:
+  # Layout options
+  unit_size: 0x100
+  unit_height: 0.5
+  min_height: 0.625
+  max_height: 0.9375
+  discontinuity_height: 0.625
+  region_width: 1.5
+
+  # Presentation options
+  background: "#fff"
+  fill: "#f9fbd3"
+  outline: "#336da5"
+  position: tl
+
+  # Address labels
+  address_format: acorn
+  size_format: si
+
+layout:
+  0x0000:
+    size: 0x0100
+    label: "Zero page"
+  0x0100:
+    size: 0x0100
+    label: "6502 stack"
+  0x0200:
+    size: 0x0100
+    label: "Workspace"
+  0x0300:
+    size: 0x0100
+    label: "Workspace"
+  0x0400:
+    size: 0x0400
+    label: "BASIC workspace"
+  0x0800:
+    size: 0x0100
+    label: "Workspace"
+  0x0900:
+    size: 0x0200
+    label: "Buffers"
+  0x0B00:
+    size: 0x0100
+    label: "User defined keys"
+  0x0C00:
+    size: 0x0100
+    label: "User defined\ncharacters"
+  0x0D00:
+    size: 0x0100
+    label: "Paged ROM\nwkspace or user\nmachine code"
+  0x0E00:
+    size: 0x0B00
+    label: "BASIC program\nspace or DFS\nworkspace"
+    labels:
+      "er,jb": "PAGE"
+  0x1900:
+    size: 0x0600
+    label: "BASIC program"
+    labels:
+      "er,jb": "PAGE on disk systems"
+      "er,jt": "TOP"
+    junction_low: dashed
+  0x1F00:
+    size: 0x0100
+    label: "Variables"
+    labels:
+      "er,jt": "TOP of variables\n(?2 + 256 * ?3)"
+  0x7B00:
+    size: 0x0100
+    label: "BASIC stack"
+    labels:
+      "er,jt": "HIMEM"
+  0x7C00:
+    size: 0x0400
+    label: "Video RAM"
+    labels:
+      "er,jt": "RAMTOP"
+      "el,jt": "&7FFF"
+  0x8000:
+    size: 0x4000
+    label: "BASIC ROM"
+    labels:
+      "erm,ic": "Paged ROMs"
+    junction_low: double
+  0xC000:
+    size: 0x3C00
+    label: "OS ROM"
+  0xFC00:
+    size: 0x0300
+    label: "Mem mapped I/O"
+  0xFF00:
+    size: 0x0100
+    label: "OS ROM"
+
+automatic:
+  discontinuities:
+    fill: "#fff"
+  addresses:
+    side: left
+    start: true
+    final_end: true
+    end_exclusive: false
+    omit:
+      - 0x7c00
+      - 0x7b00
+      - 0x8000

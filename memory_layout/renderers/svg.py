@@ -310,13 +310,25 @@ class SVGText(SVGElement):
 
     def write_self(self, fh, indent):
         attrs = []
-        attrs.append('x="{}"'.format(self.units(self.x)))
-        attrs.append('y="{}"'.format(self.units(self.y)))
 
-        styles = []
-
+        y = self.y
         xpos = self.position[0]
         ypos = self.position[1]
+        nlines = len(self.lines)
+        if nlines > 1:
+            # We might need to change the y-position so that it allows for the multiple lines,
+            # as the position we supply to SVGText is for the first line.
+            if ypos == 'b':
+                # We need to move the text up by (nlines - 1) * lineheight
+                y -= self.lineheight * (nlines - 1)
+            elif ypos == 'c':
+                # We need to move the text up by (nlines - 1) * lineheight / 2
+                y -= self.lineheight * (nlines - 1) / 2
+
+        attrs.append('x="{}"'.format(self.units(self.x)))
+        attrs.append('y="{}"'.format(self.units(y)))
+
+        styles = []
         anchor = 'start'
         if xpos == 'c':
             anchor = 'middle'
@@ -367,7 +379,6 @@ class SVGText(SVGElement):
             rect.write(fh, indent)
 
         # FIXME: Multiline not really supported
-        y = self.y
         for line in self.lines:
             fh.write(indent + "<text {}>{}</text>\n".format(" ".join(attrs), escape(line)))
             # We know that the y position is the 2nd attribute, so we update it:
@@ -749,7 +760,8 @@ class MLDRenderSVG(MLDRenderBase):
 
                 #print("Position %r => %r, %f, %f (%r)" % (label.position, pos, lx, ly - y, label))
 
-                groups.append(SVGText(lx, ly, label.label, position=pos, colour=label.colour))
+                ele = SVGText(lx, ly, label.label, position=pos, colour=label.colour)
+                groups.append(ele)
 
             y += height
 

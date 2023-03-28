@@ -65,7 +65,9 @@ class MemoryRegion(object):
                                                 self.address, self.size)
 
     def add_label(self, label, position=('ic', 'ic'), colour=None):
-        self.labels[position] = RegionLabel(label, position, colour=colour)
+        label = RegionLabel(label, position, colour=colour)
+        self.labels[position] = label
+        return label
 
     def remove_label(self, position=('ic', 'ic')):
         if position in self.labels:
@@ -79,6 +81,12 @@ class MemoryRegion(object):
 
     def set_outline_width(self, width):
         self.outline_width = width
+
+    def set_outline_lower(self, junction_type):
+        self.outline_lower = junction_type
+
+    def set_outline_upper(self, junction_type):
+        self.outline_upper = junction_type
 
 
 class DiscontinuityRegion(MemoryRegion):
@@ -199,6 +207,8 @@ class Sequence(object):
         return self.size_formatter.value(size) if self.size_formatter else self.address_formatter.value(size)
 
     def add_discontinuities(self, fill=None, outline=None, style='default'):
+        if style is None:
+            style = 'default'
         new_regions = []
         last_end = None
         for region in self.regions:
@@ -215,19 +225,21 @@ class Sequence(object):
         self.regions = new_regions
 
     def add_address_labels(self, start=True, end=False, size=False, side='right', end_exclusive=True,
-                           final_end=False, initial_start=False):
+                           final_end=False, initial_start=False, omit=None):
         xpos_map = {
                 'left': ('el', 'elf'),
                 'right': ('er', 'erf'),
             }
+        if not omit:
+            omit = ()
         xpos = xpos_map[side]
         initial = True
         for index, region in enumerate(self.regions):
             final = (index == len(self.regions) - 1)
-            if start or (initial and initial_start):
+            if (start or (initial and initial_start)) and region.address not in omit:
                 address_string = self.address_format(region.address)
                 region.add_label(address_string, (xpos[0], 'ib' if initial else 'jb'))
-            if end or (final and final_end):
+            if (end or (final and final_end)) and region.address + region.size not in omit:
                 address = region.address + region.size
                 if not end_exclusive:
                     address -= 1
