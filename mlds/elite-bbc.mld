@@ -1,0 +1,119 @@
+%YAML 1.1
+---
+# BBC memory map for Elite, from https://www.bbcelite.com/deep_dives/the_elite_memory_map.html
+defaults:
+  # Layout options
+  unit_size: 0x100
+  unit_height: 0.5
+  min_height: 0.5
+  max_height: 0.75
+  discontinuity_height: 2
+  region_width: 2.75
+
+  # Presentation options
+  background: "#000"
+  fill: "#000"
+  outline: "#90EE90"
+  colour: "#90EE90"
+  position: l
+
+  # Address labels
+  address_format: acorn
+
+layout:
+  0x0000:
+    size: 0x0100
+    labels:
+      "l": "Zero page workspace"
+      "er,ib": "&0000 = ZP"
+  0x0100:
+    size: 0x0040
+    labels:
+      "l": "Heap space ascends from XX3"
+      "er,ib": "&0100 = XX3"
+  0x01C0:
+    size: 0x0040
+    labels:
+      "l": "6502 stack descends from &01FF"
+      "er,ib": ""
+  0x0200:
+    size: 0x0100
+    labels:
+      "l": "MOS general workspace"
+      "er,ib": "&0200"
+  0x0300:
+    size: 0x0072
+    labels:
+      "l": "T% workspace"
+      "er,ib": "&0300 = T%"
+  0x0372:
+    size: 0x008E
+    labels:
+      "l": "MOS tape filing system workspace"
+      "er,ib": "&0372"
+  0x0400:
+    size: 0x0400
+    labels:
+      "l": "Recursive tokens (WORDS9.bin)"
+      "er,ib": "&0400 = QQ18"
+  0x0800:
+    size: 0x0100
+    labels:
+      "l": "MOS sound/printer workspace"
+      "er,ib": "&0800"
+  0x0900:
+    size: 0x0200
+    labels:
+      "l": "Ship data blocks ascend from K%"
+      "er,ib": "&0900 = K%"
+  0x0C00:
+    size: 0x0140
+    labels:
+      "l": "Ship data blocks descend from WP"
+      "er,ib": "SLSP"
+  0x0D40:
+    size: 0x01F4
+    labels:
+      "l": "WP workspace"
+      "er,ib": "&0D40 = WP"
+  0x0F34:
+    size: 0x000C
+    labels:
+      "l": "&0F34-&F3F unused"
+      "er,ib": "&0F34"
+  0x0F40:
+    size: 0x46FA
+    labels:
+      "l": "Main game code (ELTcode.bin)"
+      "er,ib": "&0F40 = S%"
+  0x563A:
+    size: 0x09C6
+    labels:
+      "l": "Ship blueprints (SHIPS.bin)"
+      "er,ib": "&563A = XX21"
+  0x6000:
+    size: 0x1F00
+    labels:
+      "l": "Memory for split screen"
+      "er,ib": "&6000"
+  0x7F00:
+    size: 0x0100
+    labels:
+      "l": "Python blueprint (PYTHON.bin)"
+      "er,ib": "&7F00"
+  0x8000:
+    size: 0x4000
+    labels:
+      "l": "Paged ROMs"
+      "er,ib": "&8000"
+  0xC000:
+    size: 0x4000
+    labels:
+      "l": "Machine Operating System (MOS)"
+      "er,ib": "&C000"
+      "er,it": "&FFFF"
+
+automatic:
+  discontinuities:
+    outline: "#90ee90"
+    style: dashed
