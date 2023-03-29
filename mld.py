@@ -337,6 +337,7 @@ with open(options.input, 'r') as fh:
                 end_exclusive = mldaddr.get('end_exclusive', end_exclusive)
                 final_end = mldaddr.get('final_end', final_end)
                 omit = mldaddr.get('omit', [])
+                colour = mldaddr.get('colour', defaults.colour)
                 if isinstance(omit, int):
                     omit = [omit]
 
@@ -344,7 +345,8 @@ with open(options.input, 'r') as fh:
                 sequence.add_address_labels(start=start, end=end, size=size,
                                             side=side, end_exclusive=end_exclusive,
                                             final_end=final_end,
-                                            omit=omit)
+                                            omit=omit,
+                                            colour=colour)
 
 renderer = renderer_class(output_filename)
 renderer.render(sequence)

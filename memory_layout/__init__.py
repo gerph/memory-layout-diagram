@@ -233,7 +233,7 @@ class Sequence(object):
         self.regions = new_regions
 
     def add_address_labels(self, start=True, end=False, size=False, side='right', end_exclusive=True,
-                           final_end=False, initial_start=False, omit=None):
+                           final_end=False, initial_start=False, omit=None, colour=None):
         xpos_map = {
                 'left': ('el', 'elf'),
                 'right': ('er', 'erf'),
@@ -246,19 +246,19 @@ class Sequence(object):
             final = (index == len(self.regions) - 1)
             if (start or (initial and initial_start)) and region.address not in omit:
                 address_string = self.address_format(region.address)
-                region.add_label(address_string, (xpos[0], 'ib' if initial or (start and end) else 'jb'))
+                region.add_label(address_string, (xpos[0], 'ib' if initial or (start and end) else 'jb'), colour=colour)
             if (end or (final and final_end)) and region.address + region.size not in omit:
                 address = region.address + region.size
                 if not end_exclusive:
                     address -= 1
                 address_string = self.address_format(address)
-                region.add_label(address_string, (xpos[0], 'it' if final or (start and end) else 'jt'))
+                region.add_label(address_string, (xpos[0], 'it' if final or (start and end) else 'jt'), colour=colour)
 
             if size:
                 size_string = self.size_format(region.size)
                 # The size can go against the edge if there's no start or end.
                 pos = xpos[1] if start or end else xpos[0]
-                region.add_label(size_string, (pos, 'ic'))
+                region.add_label(size_string, (pos, 'ic'), colour=colour)
 
             initial = False
 
