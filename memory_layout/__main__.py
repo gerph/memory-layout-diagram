@@ -104,7 +104,10 @@ def decode_distance(distance):
 
 
 def main():
-    parser = argparse.ArgumentParser(usage="%s [<options>] <input>" % (os.path.basename(sys.argv[0]),))
+    name = os.path.basename(sys.argv[0])
+    if name == '__main__.py':
+        name = 'python -m memory_layout'
+    parser = argparse.ArgumentParser(usage="%s [<options>] <input>" % (name,))
     parser.add_argument('input', action='store',
                         help="Input MLD file")
     parser.add_argument('--format', choices=sorted(renderers.keys()), default='svg',
@@ -119,9 +122,9 @@ def main():
     renderer_class = renderers.get(options.format)
 
     if options.output:
-        output_filename = output.output
+        output_filename = options.output
     elif options.output_prefix:
-        output_filename = "{}{}".format(output.output_prefix, renderer_class.file_suffix)
+        output_filename = "{}{}".format(options.output_prefix, renderer_class.file_suffix)
     else:
         # They didn't give any output name, so default to the input, without the extension,
         # with the extension for the format.
