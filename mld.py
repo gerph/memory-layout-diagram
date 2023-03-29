@@ -10,7 +10,8 @@ import memory_layout.simpleyaml
 
 from memory_layout import (
         Sequence, MemoryRegion, DiscontinuityRegion,
-        ValueFormatterAcorn, ValueFormatterSI, ValueFormatterCommodore, ValueFormatterC
+        ValueFormatterAcorn, ValueFormatterSI, ValueFormatterSI2, ValueFormatterCommodore,
+        ValueFormatterC
     )
 from memory_layout.renderers.dot import MLDRenderGraphviz
 from memory_layout.renderers.svg import MLDRenderSVG
@@ -46,7 +47,8 @@ formatters = {
         'acorn': ValueFormatterAcorn,
         'commodore': ValueFormatterCommodore,
         'c': ValueFormatterC,
-        'si': ValueFormatterSI
+        'si': ValueFormatterSI,
+        'si2': ValueFormatterSI2,
     }
 
 
@@ -91,7 +93,7 @@ def decode_distance(distance):
     """
     Decode a distance that might be a string.
 
-    By default discances are in inches, but it's useful to be able to specify them in points.
+    By default distances are in inches, but it's useful to be able to specify them in points.
     """
     if isinstance(distance, (int, float)):
         return distance

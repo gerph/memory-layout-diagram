@@ -220,8 +220,8 @@ elif example == 'riscos':
     sequence.set_fill_colour(None, '#C7E3EC')
     sequence.set_outline_colour(None, '#336DA5')
 
-    sequence.add_discontinuities(fill='#CCCCCC', outline='#336DA5', style='cut-out')
-    sequence.add_address_labels(start=True, end=True, size=True)
+    sequence.add_discontinuities(fill='#fff', outline='#336DA5', style='cut-out')
+    sequence.add_address_labels(start=True, end=False, size=True, final_end=True)
 
     renderer = renderer_class(filename)
     renderer.render(sequence)

@@ -124,16 +124,17 @@ class ValueFormatterC(ValueFormatter):
 
 
 class ValueFormatterSI(ValueFormatter):
+    accuracy = 1
 
     def si(self, size):
         if size == 0:
             return "0 B"
 
-        if size % (1024*1024*1024) == 0:
-            return "{} GiB".format(size / (1024*1024*1024))
-        if size % (1024*1024) == 0:
-            return "{} MiB".format(size / (1024*1024))
-        if size % 1024 == 0:
+        if size % (1024*1024*1024 / self.accuracy) == 0:
+            return "{} GiB".format(size / (1024*1024*1024.0))
+        if size % (1024*1024 / self.accuracy) == 0:
+            return "{} MiB".format(size / (1024*1024.0))
+        if size % (1024) == 0:
             return "{} KiB".format(size / 1024)
         if size < 1024:
             return "{} B".format(size)
@@ -141,14 +142,21 @@ class ValueFormatterSI(ValueFormatter):
         if size % 1024 != 0:
             return self.si(size - (size % 1024)) + " + {} B".format(size % 1024)
 
-        if size % (1024*1024) != 0:
-            return self.si(size - (size % (1024*1024))) + " + {} KiB".format((size % (1024*1024)) / 1024)
+        if size % (1024*1024 / self.accuracy) != 0:
+            return self.si(size - (size % (1024*1024 / self.accuracy))) + " + {} KiB".format((size % (1024*1024 / self.accuracy)) / 1024.0)
 
         # Should never reach here.
         return "{} B".format(size)
 
     def value(self, address):
         return self.si(address)
+
+
+class ValueFormatterSI2(ValueFormatterSI):
+    """
+    SI units, but to 2 decimal places (actually 0.25, .5 and 0.75 only).
+    """
+    accuracy = 4
 
 
 class Sequence(object):
