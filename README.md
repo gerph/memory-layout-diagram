@@ -6,6 +6,10 @@ The Memory Layout Diagram tool is intended to produce graphical diagrams of the 
 
 The tool is a python program which can generate diagrams either programatically, or through a domain specific language. The domain specific language is described below.
 
+## Example diagrams
+
+Example diagrams can be found in the public Wiki: https://github.com/gerph/memory-layout-diagram/wiki#example-images
+
 ## Installation
 
 The tool does not need to be installed, and can be used directly as a library. However, it can be installed with the PIP installation:

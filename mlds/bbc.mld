@@ -1,5 +1,6 @@
 %YAML 1.1
 ---
+# Based on diagram at: https://worldofspectrum.org/files/large/1f8d7859d89b51d
 defaults:
   # Layout options
   unit_size: 0x100
