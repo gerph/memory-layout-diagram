@@ -6,11 +6,26 @@ The Memory Layout Diagram tool is intended to produce graphical diagrams of the 
 
 The tool is a python program which can generate diagrams either programatically, or through a domain specific language. The domain specific language is described below.
 
+## Installation
+
+The tool does not need to be installed, and can be used directly as a library. However, it can be installed with the PIP installation:
+
+    pip install memory_layout
+
+Once installed, the tool can be executed as `mld`. For example:
+
+    mld elite-bbc.mld
+
+
 ## Usage
 
 The Memory Layout Diagram tool can be used with the domain specific language, as defined below. The tool can be invoked as:
 
-    python mld.py <filename>
+    python -m memory_layout [<options>] <filename>
+
+or:
+
+    mld [<options>] <filename>
 
 which will generate with the default renderer format (`svg`) for the file, with the `.mld` suffix replaced by `.svg`.
 
