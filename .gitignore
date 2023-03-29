@@ -2,3 +2,6 @@
 memory*.svg
 memory*.dot
 memory*.png
+mlds/*.dot
+mlds/*.svg
+dist/

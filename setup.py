@@ -24,20 +24,20 @@ setup(
     name = 'memory_layout',
     packages = ['memory_layout', 'memory_layout.renderers'],
     version = '0.0.1',
-    license='BSD',
+    license='MIT',
     description = 'Generating diagrams to show memory map layouts from code or definition files',
     long_description = long_description,
     long_description_content_type = 'text/markdown',
     author = 'Charles Ferguson',
     author_email = 'gerph@gerph.org',
     url = 'https://github.com/gerph/memory-layout-diagram',
-    keywords = ['diagram', 'generator'],
+    keywords = ['diagram', 'generator', 'memory-map'],
     install_requires= [
         ],
     classifiers= [
             'Development Status :: 4 - Beta',
             'Intended Audience :: Developers',
-            'License :: OSI Approved :: BSD License',
+            'License :: OSI Approved :: MIT License',
             'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
             "Operating System :: OS Independent"

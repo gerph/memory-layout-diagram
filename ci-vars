@@ -1,0 +1,553 @@
+#!/bin/bash
+##
+# Report the variables for the current repository.
+#
+# Switches indicate how the values will be written
+# to stdout:
+#
+# <default>|--shell     Variable declarations:
+#                           export <variable>=<value>
+# --fish                Variable declarations:
+#                           set -x <variable> <value>
+# --json                As JSON fields:
+#                           {
+#                               "<variable>": <value>
+#                           }
+# --ci-config           As preserved state for reuse
+#                       in a binary release.
+#                       Writes out the file .ci-config
+#                       which will be used if no .git
+#                       directory/submodule is present.
+#
+# Variables we set:
+#
+#   CI_VARIABLES
+#       A space separated list of the variables we have set.
+#
+#   CI_PROJECT_NAME
+#       The name of the project (derived from the directory,
+#       so may not be reliable)
+#
+#   CI_PROJECT_VERSION
+#       A version number based on the defined version number
+#       given in the configuration file, and an offset within
+#       either the release branch, or the branch from that.
+#       Expected to be used as part of a presentable version
+#       string in cases where the component has been exported.
+#       Includes '-dirty' when changes have been made.
+#
+#   CI_BRANCH_VERSION
+#       SCM-only version number, based on the release branch
+#       or the branch off that, and an offset.
+#       Includes '-dirty' when changes have been made.
+#
+#   CI_BRANCH
+#       The name of the branch we are on, explicitly.
+#
+#   CI_SHORT_BRANCH
+#       The name of the branch, with git-flow naming reduced
+#       to simplify the names.
+#
+#   CI_SHA
+#       The explicit SHA of the change in the SCM.
+#
+#   SOURCE_DATE_EPOCH
+#       The date of the source, as a unix epoch time stamp.
+#       See https://wiki.debian.org/ReproducibleBuilds/TimestampsProposal
+#
+
+
+# Failures will be terminal
+set -e
+
+# Change to root directory
+scriptdir="$(cd "$(dirname "$0")" && pwd -P)"
+rootdir="$(cd "${scriptdir}/.." && pwd -P)"
+
+# The root branch that everything comes off
+master_branch_name='master'
+
+# Where mainline development happens
+mainline_branch_name='develop'
+
+# Whether we treat unrecognised branches as coming off mainline
+# (git-flow semantics for branches not starting with 'feature')
+bare_branches_off_mainline=true
+
+#------ Derived values ------
+# If we do not have a mainline branch, we cannot use the
+# 'bare_branches_off_mainline' option.
+if ! git show-ref --verify --quiet "refs/heads/${mainline_branch_name}" ; then
+    # The mainline branch does not exist, so the option cannot be set.
+    bare_branches_off_mainline=false
+fi
+
+
+##
+# Output a help message and exit.
+function help() {
+    cat <<EOM
+Determine the variables for use with CI.
+Syntax: $0 [<options>]
+
+Options:
+    --repo      The repository directory to work in
+    --shell     Output variables for shell (default)
+    --fish      Output variables for fish
+    --json      Output variables as JSON
+    --ci-config Output .ci-config for reuse after export
+EOM
+    exit 0
+}
+
+
+outtype=shell
+while [[ "${1:0:1}" == '-' ]] ; do
+    # Types of output
+    if [[ "$1" == '--json' ]] ; then
+        outtype=json
+        shift
+
+    elif [[ "$1" == '--shell' ]] ; then
+        outtype=shell
+        shift
+
+    elif [[ "$1" == '--fish' ]] ; then
+        outtype=fish
+        shift
+
+    elif [[ "$1" == '--ci-config' ]] ; then
+        outtype=ciconfig
+        shift
+
+    # Repository
+    elif [[ "$1" == '--repo' ]] ; then
+        givendir="$(cd "$2" && pwd -P)"
+        cd "$givendir" || exit 1
+        rootdir="$(git rev-parse --show-toplevel 2> /dev/null || true)"
+        if [[ "$rootdir" == '' ]] ; then
+            rootdir="$givendir"
+        fi
+        shift
+        shift
+
+    # Help message
+    elif [[ "$1" == '-h' ||
+            "$1" == '--help' ]] ; then
+        help
+
+    # Not recognised
+    else
+        echo "Unrecognised switch '$1'" >&2
+        exit 1
+    fi
+done
+
+if [[ "$#" != 0 ]] ; then
+    echo "Unsupported positional parameters:" >&2
+    for param in "$@" ; do
+        echo "  $param" >&2
+    done
+    exit 1
+fi
+
+
+##
+# Read a configuration parameter from the project's config.
+#
+# @param $1 The key to read from the configuration file
+# @param $2 The default value to return if the config is not set
+function config() {
+    local key="$1"
+    local default="${2:-}"
+    local config="${3:-${config_file}}"
+
+    if [[ ! -f "${config}" ]] ; then
+        # No configuration file
+        echo "${default}"
+    elif grep -q "^${key}: \?" "${config}" ; then
+        # Key found, so we can return it
+        grep "^${key}: \?" "${config}" | sed "s/^${key}: *//" || true
+    else
+        # Key not found in configuration file
+        echo "${default}"
+    fi
+}
+
+
+function shell_start() {
+    : # Nothing to do
+}
+function fish_start()  {
+    : # Nothing to do
+}
+function json_start() {
+    echo -n '{'
+    json_trailer=''
+}
+
+function shell_end()  {
+    : # Nothing to do
+}
+function fish_end()  {
+    : # Nothing to do
+}
+function json_end() {
+    echo
+    echo '}'
+}
+
+function shell_variable() {
+    echo "export $1=\"$2\""
+}
+function fish_variable() {
+    echo "set -x $1 \"$2\""
+}
+function json_variable() {
+    echo "$json_trailer"
+    echo -n "    \"$1\": \"$2\""
+    json_trailer=','
+}
+
+
+function start() {
+    "${outtype}_start"
+    variables=()
+}
+function end() {
+    "${outtype}_end"
+}
+function variable() {
+    local var="$1"
+    local val="$2"
+    "${outtype}_variable" "$var" "$val"
+    variables+=("$var")
+}
+
+
+##
+# Determine whether the git workspace is clean or not.
+#
+# @param $1     String to return when clean
+# @param $2     String to return when dirty
+function git_dirty() {
+
+    local clean="${1:-clean}"
+    local dirty="${2:-dirty}"
+
+    local is_dirty=false
+    local index_changes=false
+    local working_changes=false
+
+    if ! git diff-index --quiet --cached HEAD -- ; then
+        index_changes=true
+    fi
+    if ! git diff-files --quiet ; then
+        working_changes=true
+    fi
+    if $index_changes || $working_changes ; then
+        is_dirty=true
+    fi
+
+    if $is_dirty ; then
+        echo -n "$dirty"
+    else
+        echo -n "$clean"
+    fi
+}
+
+
+##
+# Return the branch that a given SHA is present on.
+function branch_for_sha() {
+    local sha="$1"
+
+    # Get a list of the branches that the requested commit is on.
+    # In the interests of consistency, we get the branches in
+    # sorted order. Whilst the result may change as other branches
+    # are created, for a given state of the tree the results for
+    # this function will remain constant.
+    local branches=($(git branch --contains "$sha" 2> /dev/null \
+                        | grep '^. [A-Za-z0-9]' \
+                        | cut -c3- \
+                        | sort))
+
+    if [[ "${#branches}" == 0 ]] ; then
+        # Not on any local branches? ok so check remotes.
+        # If we checked out a sha, then we'll not have a local branch for the
+        # tool to live on, so we need to check the remotes.
+        branches=($(git branch --remotes --contains "$sha" 2> /dev/null \
+                        | grep '^. [A-Za-z0-9]' \
+                        | sed -E -e 's!. (remotes/)?[a-zA-Z0-9]+/!!' \
+                        | grep -v '^HEAD' \
+                        | sort))
+    fi
+
+    if [[ "${#branches}" == 1 ]] ; then
+        # One on one branch, so that means it only lives on that branch.
+        echo -n "${branches[0]}"
+        return 0
+    fi
+
+    # Decide if we can select one of those branches.
+    local branch
+    local favoured
+    for favoured in "${master_branch_name}" "${mainline_branch_name}" ; do
+        for branch in ${branches[@]} ; do
+            if [[ "${branch}" == "${favoured}" ]] ; then
+                echo -n "${branch}"
+                return 0
+            fi
+        done
+    done
+
+    # It is not on our master or mainline branch.
+    # This means it is on a branch that has been branched from one of them.
+    # And because there are more than one of them, it means that it has probably
+    # been branched a second (or subsequent) time.
+    # Consider master branched to create 'fix-ui-bug', added a few fixes, and then
+    # recognised a more involved issue with the presentation that needed more
+    # thought 'fix-complex-ui-bug'. Those early fixes would appear to be on both
+    # 'fix-ui-bug' and on 'fix-complex-ui-bug'.
+
+    # Let's just return the first of these.
+    echo -n "${branches[0]}"
+}
+
+
+##
+# Return version numbers for the current branch version.
+function git_branch_version() {
+    local sha="$1"
+
+    local branch
+    local flow
+    local pattern
+    local labels
+    local label
+    local parent_branch
+    local steps
+    local sha_of_branch_point
+    local branch_version
+    local commits_on_branch
+    local version
+
+    # Naming conventions used here match what is used for the git-flow model.
+    # Due to the internal git management the use of '/' within a branch name is
+    # strongly discouraged as it precludes the use the branches terminating
+    # without the '/' (ie using 'develop/0' means you can never use 'develop'
+    # unless the repository is reset and the trees read cleanly into a new
+    # repository with separate names).
+
+    sha="$(git rev-parse "$sha")"
+    branch="$(branch_for_sha "$sha")"
+    flow=false
+
+    pattern=()
+    labels=()
+
+    if [[ "${branch}" == "${master_branch_name}" ]] ; then
+        flow=false
+        # The pattern here is master
+        pattern=("${master_branch_name}")
+        labels=('')
+
+    elif [[ "${branch}" == "${mainline_branch_name}" ]] ; then
+        flow=true
+        # The pattern here is master->develop
+        pattern=("${master_branch_name}" "${mainline_branch_name}")
+        labels=('' '')
+
+    elif [[ "${branch:0:8}" == 'feature/' ]] ; then
+        flow=true
+        # The pattern here is master->develop->feature
+        pattern=("${master_branch_name}" "${mainline_branch_name}" "${branch}")
+        labels=('' '' "${branch:8}")
+
+    elif [[ "${branch:0:8}" == 'release/' ]] ; then
+        # Release in gitflow actually means that it's a branch undergoing qa.
+        # It is NOT a release branch.
+        # Release in other schemes is an actual release branch, which commonly
+        # includes the QA testing.
+        flow=true
+        # The pattern here is master->develop->release
+        pattern=("${master_branch_name}" "${mainline_branch_name}" "${branch}")
+        labels=('' '' "rel+${branch:8}")
+
+    elif [[ "${branch:0:7}" == 'hotfix/' ]] ; then
+        flow=true
+        # The pattern here is master->hotfix
+        pattern=("${master_branch_name}" "${branch}")
+        labels=('' "fix+${branch:7}")
+
+    else
+        if $bare_branches_off_mainline ; then
+            pattern=("${master_branch_name}" "${mainline_branch_name}" "${branch}")
+            labels=('' '' "${branch}")
+        else
+            pattern=("${master_branch_name}" "${branch}")
+            labels=('' "${branch}")
+        fi
+    fi
+
+    # We work our way down the pattern from the end to the start
+    branch_version=''
+    while [[ "${#pattern[@]}" -gt 0 ]] ; do
+        # Pop the entries from the pattern stack
+        branch="${pattern[${#pattern[@]}-1]}"
+        unset 'pattern[${#pattern[@]}-1]'
+        label="${labels[${#labels[@]}-1]}"
+        unset 'labels[${#labels[@]}-1]'
+
+        # We are processing branch $branch...
+        # ... which we will label as $label (or nothing if empty)
+        # We want to know the number of commits between the current sha
+        # and the branch point from the prior branch.
+        if [[ "${#pattern}" == 0 ]] ; then
+            parent_branch='(start)'
+            steps="${sha}"
+        else
+            parent_branch="${pattern[${#pattern[@]}-1]}"
+            sha_of_branch_point=$(git show-branch --merge-base "${branch}" "${parent_branch}" 2>/dev/null || true)
+            if [[ "$sha_of_branch_point" == '' ]] ; then
+                sha_of_branch_point=$(git show-branch --merge-base "origin/${branch}" "origin/${parent_branch}" 2>/dev/null || true)
+            fi
+            if [[ "${sha_of_branch_point}" == '' ]] ; then
+                steps='HEAD'
+            else
+                steps="${sha_of_branch_point}..${sha}"
+            fi
+        fi
+        commits_on_branch=$(git rev-list --count "${steps}")
+
+        version="${label:+$label.}${commits_on_branch}"
+        branch_version="${version}${branch_version:+.${branch_version}}"
+
+        if [[ "${sha_of_branch_point}" == '' ]] ; then
+            break
+        fi
+        sha="${sha_of_branch_point}"
+    done
+
+    echo "$branch_version"
+}
+
+
+cd "${rootdir}"
+config_file="${rootdir}/project.config"
+
+project_major_version="$(config 'version' '0.0')"
+if [[ "$project_major_version" == '0.0' ]] ; then
+    versionnum=$(grep '#define Module_MajorVersion_CMHG' "${rootdir}/VersionNum" 2>/dev/null | sed 's/^.*   *//')
+    if [[ "$versionnum" != '' ]] ; then
+        project_major_version="$versionnum"
+    fi
+fi
+project_initial_tag="$(config 'version_git_tag' '')"
+
+if [[ -d '.git' || -f '.git' ]] ; then
+    sha="$(git rev-parse HEAD)"
+    main_branch="master"
+    branch="$(branch_for_sha "$sha")"
+    short_branch="$branch"
+
+    if [[ "${branch:0:8}" == 'feature/' ]] ; then
+        main_branch=develop
+        short_branch="${branch:8}"
+    elif [[ "${branch}" == 'develop' ]] ; then
+        main_branch=master
+    elif [[ "${branch:0:8}" == 'release/' ]] ; then
+        main_branch=develop
+        short_branch="rel+${branch:8}"
+    elif [[ "${branch:0:7}" == 'hotfix/' ]] ; then
+        main_branch=master
+        short_branch="fix+${branch:7}"
+    fi
+
+    branch_version="${project_major_version}.$(git_branch_version "$sha")"
+
+    # The project version is based on tag names.
+    if [[ "${project_initial_tag}" == '' ]] ; then
+        project_initial_tag_branch="${main_branch}"
+    else
+        # If there is an initial tag, we need to check that
+        # it's on the same branch as us; otherwise we cannot
+        # use the tag offset format.
+        project_initial_tag_branch="$(branch_for_sha "${project_initial_tag}")"
+    fi
+
+    if [[ "$project_initial_tag_branch" == "$branch" ]] ; then
+        # The tag is on this branch; so we just use the count to make the final version
+        if [[ "${project_initial_tag}" == '' ]] ; then
+            project_version_count_spec='HEAD'
+        else
+            project_version_count_spec="${project_initial_tag}..HEAD"
+        fi
+        project_version_count="$(git rev-list --count "$project_version_count_spec")"
+    else
+        # The tag is on a different branch, so we must use the branch name + branch count
+        sha1_of_branch_point=$(git show-branch --merge-base "${main_branch}" 2>/dev/null || true)
+        if [[ "$sha1_of_branch_point" == '' ]] ; then
+            sha1_of_branch_point=$(git show-branch --merge-base "origin/${main_branch}" 2>/dev/null || true)
+        fi
+        if [[ "${branch}" == "${main_branch}" || "${sha1_of_branch_point}" == '' ]] ; then
+            steps='HEAD'
+        else
+            steps="${sha1_of_branch_point}..HEAD"
+        fi
+        commits_on_branch=$(git rev-list --count "${steps}")
+        project_version_count="${short_branch}.${commits_on_branch}"
+    fi
+    project_version="${project_major_version}.${project_version_count}"
+
+    # Augment ourversions if we're dirty
+    dirty="$(git_dirty '-clean' '-dirty')"
+    if [[ "$dirty" == '-clean' ]] ; then
+        dirty=''
+    fi
+    project_version="${project_version}${dirty}"
+    branch_version="${branch_version}${dirty}"
+
+    source_date_epoch="$(git log -1 --pretty=%ct)"
+
+    # Maybe this should use the remote name?
+    project="$(basename "$rootdir")"
+else
+    # If a CI configuration file has been written to describe the source,
+    # we will use that. Otherwise, we will merely use defaults.
+    main_branch="$(config main_branch "UNDEF" ".ci-config")"
+    branch="$(config branch "UNDEF" ".ci-config")"
+    short_branch="$(config short_branch "UNDEF" ".ci-config")"
+    sha="$(config sha "UNDEF" ".ci-config")"
+    branch_version="$(config branch_version "SNAPSHOT" ".ci-config")"
+    project="$(config project "$(basename "$rootdir")" ".ci-config")"
+    project_version="$(config project_version "${project_major_version}.SNAPSHOT" ".ci-config")"
+    source_date_epoch="$(config source_date_epoch "$(date +%s)" ".ci-config")"
+fi
+
+
+# Export form, that sets up the sources variables.
+if [[ "${outtype}" == 'ciconfig' ]] ; then
+    echo  > .ci-config "main_branch: ${main_branch}"
+    echo >> .ci-config "branch: ${branch}"
+    echo >> .ci-config "short_branch: ${short_branch}"
+    echo >> .ci-config "sha: ${sha}"
+    echo >> .ci-config "branch_version: ${branch_version}"
+    echo >> .ci-config "project: ${project}"
+    echo >> .ci-config "project_version: ${project_version}"
+    echo >> .ci-config "source_date_epoch: ${source_date_epoch}"
+    exit 0
+fi
+
+
+# Other forms that use the system variables.
+start
+variable CI_PROJECT_NAME "$project"
+variable CI_PROJECT_VERSION "$project_version"
+variable CI_BRANCH_VERSION "$branch_version"
+variable CI_BRANCH "$branch"
+variable CI_SHORT_BRANCH "$short_branch"
+variable CI_SHA "$sha"
+variable SOURCE_DATE_EPOCH "$source_date_epoch"
+variable CI_VARIABLES "${variables[*]}"
+end
