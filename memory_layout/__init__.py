@@ -214,7 +214,7 @@ class Sequence(object):
         """
         return self.size_formatter.value(size) if self.size_formatter else self.address_formatter.value(size)
 
-    def add_discontinuities(self, fill=None, outline=None, style='default'):
+    def add_discontinuities(self, fill=None, outline=None, style='default', outline_width=None):
         if style is None:
             style = 'default'
         new_regions = []
@@ -227,6 +227,8 @@ class Sequence(object):
                 new_region.set_fill_colour(fill)
                 if outline:
                     new_region.set_outline_colour(outline)
+                    if outline_width:
+                        new_region.set_outline_width(outline_width)
                 new_regions.append(new_region)
             new_regions.append(region)
             last_end = region.end

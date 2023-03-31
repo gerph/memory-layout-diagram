@@ -165,13 +165,15 @@ class SVGRect(SVGElement):
 
 class SVGPath(SVGElement):
 
-    def __init__(self, fill=None, stroke=None, stroke_width=None, stroke_pattern='solid'):
+    def __init__(self, fill=None, stroke=None, stroke_width=None,
+                 stroke_pattern='solid', stroke_cap=None):
         super(SVGPath, self).__init__()
         self.components = []
         self.fill = fill
         self.stroke = stroke
         self.stroke_width = stroke_width
         self.stroke_pattern = stroke_pattern
+        self.stroke_cap = stroke_cap
 
     def move(self, x, y):
         self.components.append(('M', x, y))
@@ -204,6 +206,8 @@ class SVGPath(SVGElement):
         if self.stroke:
             if self.stroke_width:
                 attrs.append('stroke-width="{}"'.format(self.units(self.stroke_width)))
+            if self.stroke_cap:
+                attrs.append('stroke-linecap="{}"'.format(self.stroke_cap))
             if self.stroke_pattern != 'solid':
                 if self.stroke_pattern == 'dotted':
                     pattern = "{},{}".format(self.units(self.stroke_width * 2),
@@ -481,12 +485,32 @@ class MLDRenderSVG(MLDRenderBase):
     def render_discontinuity(self, sequence, groups, region, y, height):
         stroke = region.outline
         fill = region.fill
+
+        def top_and_bottom(groups, region, y):
+            # Now draw the top and bottom as solids
+            if region.outline_upper == 'solid' or region.outline_lower == 'solid':
+                path = SVGPath(stroke=stroke,
+                               stroke_width=region.outline_width,
+                               stroke_cap='square')
+                if region.outline_upper == 'solid':
+                    path.move(0, y)
+                    path.line(sequence.region_width, y)
+
+                if region.outline_lower == 'solid':
+                    path.move(0, y + height)
+                    path.line(sequence.region_width, y + height)
+
+                groups.append(path)
+
         if region.discontinuity_style in ('zig-zag', 'default'):
             # Zig-zag discontinuity
             xoffset = sequence.unit_height / 6.0
             ysegmentsize = (height - (xoffset * 2)) / 4.0
 
             for path_pass in range(0 if fill else 1, 2):
+                if path_pass == 1:
+                    top_and_bottom(groups, region, y)
+
                 if path_pass == 0:
                     path = SVGPath(fill=fill)
                 else:
@@ -559,6 +583,8 @@ class MLDRenderSVG(MLDRenderBase):
 
                 groups.append(path)
 
+            top_and_bottom(groups, region, y)
+
             path = SVGPath(stroke=stroke,
                            stroke_width=region.outline_width)
 
@@ -592,31 +618,19 @@ class MLDRenderSVG(MLDRenderBase):
             # First fill the inside of the region
             if fill:
                 groups.append(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
-                                      fill=fill,
-                                      stroke=None))
+                                      fill=fill, stroke=None))
 
-            # Now draw the top and bottom as solids
-            if region.outline_upper == 'solid' or region.outline_lower == 'solid':
-                path = SVGPath(stroke=stroke,
-                               stroke_width=region.outline_width)
-                if region.outline_upper == 'solid':
-                    path.move(0, y)
-                    path.line(sequence.region_width, y)
-
-                if region.outline_lower == 'solid':
-                    path.move(0, y + height)
-                    path.line(sequence.region_width, y + height)
-
-                groups.append(path)
+            top_and_bottom(groups, region, y)
 
             path = SVGPath(stroke=stroke,
                            stroke_width=region.outline_width,
+                           stroke_cap='square',
                            stroke_pattern=region.discontinuity_style)
             path.move(0, y)
             path.line(0, y + height)                            # Down the left
 
-            path.move(sequence.region_width, y + height)
-            path.line(sequence.region_width, y)                 # Up the right
+            path.move(sequence.region_width, y)                 # Down the right
+            path.line(sequence.region_width, y + height)
 
             groups.append(path)
 
@@ -654,7 +668,8 @@ class MLDRenderSVG(MLDRenderBase):
                                           stroke=None))
                     # Now draw the outline as required
                     path = SVGPath(stroke=region.outline,
-                                   stroke_width=region.outline_width)
+                                   stroke_width=region.outline_width,
+                                   stroke_cap='square')
                     path.move(0, y)
                     path.line(0, y + height)                            # Down the left
 
@@ -681,7 +696,8 @@ class MLDRenderSVG(MLDRenderBase):
                     if region.outline_lower in ('dotted', 'dashed'):
                         path = SVGPath(stroke=region.outline,
                                        stroke_width=region.outline_width,
-                                       stroke_pattern=region.outline_lower)
+                                       stroke_pattern=region.outline_lower,
+                                       stroke_cap='square')
 
                         path.move(0, y + height)
                         path.line(sequence.region_width, y + height)
@@ -690,7 +706,8 @@ class MLDRenderSVG(MLDRenderBase):
 
                     if region.outline_lower == 'ticks':
                         path = SVGPath(stroke=region.outline,
-                                       stroke_width=region.outline_width)
+                                       stroke_width=region.outline_width,
+                                       stroke_cap='square')
                         ticksize = sequence.region_width / 8.0
 
                         path.move(0, y + height)
@@ -704,7 +721,8 @@ class MLDRenderSVG(MLDRenderBase):
                     if region.outline_upper in ('dotted', 'dashed'):
                         path = SVGPath(stroke=region.outline,
                                        stroke_width=region.outline_width,
-                                       stroke_pattern=region.outline_upper)
+                                       stroke_pattern=region.outline_upper,
+                                       stroke_cap='square')
 
                         path.move(0, y)
                         path.line(sequence.region_width, y)
@@ -713,7 +731,8 @@ class MLDRenderSVG(MLDRenderBase):
 
                     if region.outline_upper == 'ticks':
                         path = SVGPath(stroke=region.outline,
-                                       stroke_width=region.outline_width)
+                                       stroke_width=region.outline_width,
+                                       stroke_cap='square')
                         ticksize = sequence.region_width / 12.0
 
                         path.move(0, y)

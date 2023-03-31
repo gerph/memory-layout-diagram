@@ -316,7 +316,8 @@ def main():
                     style = mlddisc.get('style', None)
 
                 if enable:
-                    sequence.add_discontinuities(fill=fill, outline=outline, style=style)
+                    sequence.add_discontinuities(fill=fill, outline=outline, style=style,
+                                                 outline_width=decode_distance(defaults.outline_width))
 
             if 'addresses' in mldauto:
                 mldaddr = mldauto['addresses']
