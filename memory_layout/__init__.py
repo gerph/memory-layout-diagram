@@ -190,6 +190,21 @@ class Sequence(object):
     def discontinuity_height(self, value):
         self._discontinuity_height = value
 
+    def insert_region(self, index, region):
+        """
+        Insert a region into the list of known regions.
+
+        @param index:   Index to insert before, or -ve to insert from the end, or >= maximum to insert at end
+        @param region:  The region to insert
+        """
+        if index >= len(self.regions):
+            self.add_region(region)
+        else:
+            while index < 0:
+                index = len(self.regions) + index
+
+            self.regions.insert(region, index)
+
     def add_region(self, region):
         self.regions.append(region)
 

@@ -41,6 +41,9 @@ class SVGElement(object):
     def prepend_inner(self, element):
         self.inner.insert(0, element)
 
+    def insert_inner(self, index, element):
+        self.inner.insert(index, element)
+
     def append_inner(self, element):
         self.inner.append(element)
 
@@ -405,6 +408,16 @@ class SVGGroup(SVGElement):
                 element += '\n'
             self.prepend_inner(SVGRaw(element))
 
+    def insert(self, index, element):
+        if isinstance(element, (Bounds, tuple)):
+            self.self_bounds += element
+        elif isinstance(element, SVGElement):
+            self.insert_inner(index, element)
+        else:
+            if not element.endswith('\n'):
+                element += '\n'
+            self.insert_inner(index, SVGRaw(element))
+
     def append(self, element):
         if isinstance(element, (Bounds, tuple)):
             self.self_bounds += element
@@ -433,9 +446,14 @@ class MLDRenderSVG(MLDRenderBase):
 
     default_fontname = "Optima, Rachana, Sawasdee, sans-serif"
 
+    # Whether filled elements appear first in the file (makes the regions render better, with
+    # no overlap of the outlines for filled regions).
+    filled_first = True
+
     def __init__(self, fh=None):
         super(MLDRenderSVG, self).__init__(fh)
         self.groups = []
+        self.filled_index = 0
 
     def header(self, bounds):
         self.write("""\
@@ -460,6 +478,7 @@ class MLDRenderSVG(MLDRenderBase):
 
     def render(self, memorymap):
         self.groups = SVGGroup()
+        self.filled_index = 0
         if isinstance(memorymap, Sequence):
             self.groups.append(self.render_sequence(memorymap))
 
@@ -481,6 +500,23 @@ class MLDRenderSVG(MLDRenderBase):
         self.header(self.groups.bounds)
         self.groups.write(self.fh)
         self.footer()
+
+    def add_filled(self, svgelement):
+        """
+        Add a filled SVG element to the list of elements that are rendered.
+
+        This is a method so that we can decide whether the filled elements appear first
+        in the SVG, or whether they appear grouped. Appearing first in the file means
+        that they will be guaranteed to not overlap the bordered sections. However, it
+        means that they're not together in the file which might make manual editing
+        more frustrating. Since manual editing is less likely, the filled_first option
+        is enabled by default.
+        """
+        if self.filled_first:
+            self.groups.insert(self.filled_index, svgelement)
+            self.filled_index += 1
+        else:
+            self.groups.append(svgelement)
 
     def render_discontinuity(self, sequence, groups, region, y, height):
         stroke = region.outline
@@ -535,7 +571,10 @@ class MLDRenderSVG(MLDRenderBase):
                 path.line(sequence.region_width, y + xoffset)
                 path.line(sequence.region_width, y)
 
-                groups.append(path)
+                if path_pass ==0:
+                    self.add_filled(path)
+                else:
+                    groups.append(path)
 
         elif region.discontinuity_style == 'cut-out':
             # cut-out line
@@ -581,7 +620,7 @@ class MLDRenderSVG(MLDRenderBase):
                             sequence.region_width, y + height - ysegmentsize)
                 path.line(sequence.region_width, y + height)
 
-                groups.append(path)
+                self.add_filled(path)
 
             top_and_bottom(groups, region, y)
 
@@ -617,8 +656,8 @@ class MLDRenderSVG(MLDRenderBase):
 
             # First fill the inside of the region
             if fill:
-                groups.append(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
-                                      fill=fill, stroke=None))
+                self.add_filled(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
+                                        fill=fill, stroke=None))
 
             top_and_bottom(groups, region, y)
 
@@ -656,16 +695,16 @@ class MLDRenderSVG(MLDRenderBase):
 
             else:
                 if region.outline_lower == 'solid' and region.outline_upper == 'solid':
-                    groups.append(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
-                                          fill=region.fill or '#fff',
-                                          stroke=region.outline, stroke_width=region.outline_width))
+                    self.add_filled(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
+                                            fill=region.fill or '#fff',
+                                            stroke=region.outline, stroke_width=region.outline_width))
                 else:
                     # They requested a different type of line in the upper or lower, so this isn't
                     # a simple rectangle...
                     # First fill the inside of the region
-                    groups.append(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
-                                          fill=region.fill or '#fff',
-                                          stroke=None))
+                    self.add_filled(SVGRect(x0=0, y0=y, width=sequence.region_width, height=height,
+                                            fill=region.fill or '#fff',
+                                            stroke=None))
                     # Now draw the outline as required
                     path = SVGPath(stroke=region.outline,
                                    stroke_width=region.outline_width,
