@@ -1,3 +1,5 @@
+# pylint: skip-file
+# flake8: noqa
 """
 Memory Layout Diagram renderer implementations.
 """

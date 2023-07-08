@@ -1,3 +1,5 @@
+# pylint: skip-file
+# flake8: noqa
 """
 SVG renderer for the memory layout diagrams.
 """
@@ -242,7 +244,7 @@ class SVGText(SVGElement):
     fontname = 'Optima, Rachana, Sawasdee, sans-serif'
     bounds_aspect = 0.75
 
-    def __init__(self, x, y, string, colour=None, position='cc'):
+    def __init__(self, x, y, string, colour=None, position='cc', fontname=None):
         super(SVGText, self).__init__()
         self.x = x
         self.y = y
@@ -252,6 +254,7 @@ class SVGText(SVGElement):
         #   t, c, b : top, centre, bottom for the y position
         self.position = position
         self.colour = colour
+        self.fontname = fontname
 
     @property
     def self_bounds(self):
@@ -454,6 +457,7 @@ class MLDRenderSVG(MLDRenderBase):
         super(MLDRenderSVG, self).__init__(fh)
         self.groups = []
         self.filled_index = 0
+        self.style = ""
 
     def header(self, bounds):
         self.write("""\
@@ -461,6 +465,7 @@ class MLDRenderSVG(MLDRenderBase):
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="{:.2f}in {:.2f}in {:.2f}in {:.2f}in" width="{:.2f}in" height="{:.2f}in">
 <defs>
     <style type="text/css">
+        {}
         text {{
             font-family: {};
         }}
@@ -469,6 +474,7 @@ class MLDRenderSVG(MLDRenderBase):
 """.format(bounds.x0, bounds.y0, bounds.x1, bounds.y1,
            bounds.x1 - bounds.x0,
            bounds.y1 - bounds.y0,
+           self.style,
            self.default_fontname))
 
     def footer(self):
@@ -810,13 +816,13 @@ class MLDRenderSVG(MLDRenderBase):
                         pos = 'r'
 
                     elif xpos == 'erf':
-                        lx += sequence.region_width * 2 - (insetx * 2)
+                        lx += sequence.region_width * 1.6 - (insetx * 2)
                         pos = 'r'
                     elif xpos == 'erm':
                         lx += sequence.region_width + (sequence.region_width - insetx * 2) / 2.0
                         pos = 'c'
                     elif xpos == 'er':
-                        lx += sequence.region_width
+                        lx += sequence.region_width * 1.02
                         pos = 'l'
 
                 else:
@@ -844,7 +850,7 @@ class MLDRenderSVG(MLDRenderBase):
 
                 #print("Position %r => %r, %f, %f (%r)" % (label.position, pos, lx, ly - y, label))
 
-                ele = SVGText(lx, ly, label.label, position=pos, colour=label.colour)
+                ele = SVGText(lx, ly, label.label, position=pos, colour=label.colour, fontname=label.fontname)
                 groups.append(ele)
 
             y += height

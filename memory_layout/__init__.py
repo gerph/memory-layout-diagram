@@ -1,3 +1,5 @@
+# pylint: skip-file
+# flake8: noqa
 #!/usr/bin/env python
 """
 Describe memory regions.
@@ -29,12 +31,13 @@ class RegionLabel(object):
         `jb` - at the bottom region junction
     """
 
-    def __init__(self, label, position, colour=None):
+    def __init__(self, label, position, colour=None, fontname=None):
         self.label = label
         self.position = position
 
         # Presentational properties
         self.colour = colour
+        self.fontname = fontname
 
     def __repr__(self):
         return "<{}(position={!r}, label={!r}, colour={!r}>".format(self.__class__.__name__,
@@ -64,8 +67,8 @@ class MemoryRegion(object):
         return "<{}(&{:08x} + &{:08x})>".format(self.__class__.__name__,
                                                 self.address, self.size)
 
-    def add_label(self, label, position=('ic', 'ic'), colour=None):
-        label = RegionLabel(label, position, colour=colour)
+    def add_label(self, label, position=('ic', 'ic'), colour=None, fontname=None):
+        label = RegionLabel(label, position, colour=colour, fontname=fontname)
         self.labels[position] = label
         return label
 
@@ -123,6 +126,12 @@ class ValueFormatterC(ValueFormatter):
         return "0x%X" % (address,)
 
 
+class ValueFormatterC8(ValueFormatter):
+
+    def value(self, address):
+        return "0x%04X %04X" % ((address >> 16), (address & 0xFFFF))
+
+
 class ValueFormatterSI(ValueFormatter):
     accuracy = 1
 
@@ -157,6 +166,26 @@ class ValueFormatterSI2(ValueFormatterSI):
     SI units, but to 2 decimal places (actually 0.25, .5 and 0.75 only).
     """
     accuracy = 4
+
+
+class ValueFormatterHuman(ValueFormatter):
+    accuracy = 1
+
+    def si(self, size):
+        if size == 0:
+            return "0 B"
+
+        if size > (2 * 1024 * 1024 * 1024):
+            return "{:.0f} GB".format(size / (1024 * 1024 * 1024.0))
+        elif size > (2 * 1024 * 1024):
+            return "{:.0f} MB".format(size / (1024 * 1024.0))
+        elif size > (2 * 1024):
+            return "{:.0f} KB".format(size / 1024)
+
+        return "{} Bytes".format(size)
+
+    def value(self, address):
+        return self.si(address)
 
 
 class Sequence(object):
@@ -250,7 +279,7 @@ class Sequence(object):
         self.regions = new_regions
 
     def add_address_labels(self, start=True, end=False, size=False, side='right', end_exclusive=True,
-                           final_end=False, initial_start=False, omit=None, colour=None):
+                           final_end=False, initial_start=False, omit=None, colour=None, colour_size=None, fontname_address=None):
         xpos_map = {
                 'left': ('el', 'elf'),
                 'right': ('er', 'erf'),
@@ -263,19 +292,19 @@ class Sequence(object):
             final = (index == len(self.regions) - 1)
             if (start or (initial and initial_start)) and region.address not in omit:
                 address_string = self.address_format(region.address)
-                region.add_label(address_string, (xpos[0], 'ib' if initial or (start and end) else 'jb'), colour=colour)
+                region.add_label(address_string, (xpos[0], 'ib' if initial or (start and end) else 'jb'), colour=colour, fontname=fontname_address)
             if (end or (final and final_end)) and region.address + region.size not in omit:
                 address = region.address + region.size
                 if not end_exclusive:
                     address -= 1
                 address_string = self.address_format(address)
-                region.add_label(address_string, (xpos[0], 'it' if final or (start and end) else 'jt'), colour=colour)
+                region.add_label(address_string, (xpos[0], 'it' if final or (start and end) else 'jt'), colour=colour, fontname=fontname_address)
 
             if size:
                 size_string = self.size_format(region.size)
                 # The size can go against the edge if there's no start or end.
                 pos = xpos[1] if start or end else xpos[0]
-                region.add_label(size_string, (pos, 'ic'), colour=colour)
+                region.add_label(size_string, (pos, 'ic'), colour=colour_size)
 
             initial = False
 

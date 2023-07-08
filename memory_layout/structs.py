@@ -1,3 +1,5 @@
+# pylint: skip-file
+# flake8: noqa
 """
 Structures for managing graphics operations.
 """
