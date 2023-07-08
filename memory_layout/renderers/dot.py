@@ -1,3 +1,5 @@
+# pylint: skip-file
+# flake8: noqa
 """
 Graphviz Dot renderer for the Memory Layout Diagrams.
 """

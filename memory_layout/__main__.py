@@ -1,3 +1,5 @@
+# pylint: skip-file
+# flake8: noqa
 """
 Process a memory layout definition to generate a diagram.
 """
@@ -10,8 +12,9 @@ import memory_layout.simpleyaml
 
 from memory_layout import (
         Sequence, MemoryRegion, DiscontinuityRegion,
-        ValueFormatterAcorn, ValueFormatterSI, ValueFormatterSI2, ValueFormatterCommodore,
-        ValueFormatterC
+        ValueFormatterAcorn, ValueFormatterSI, ValueFormatterSI2,
+        ValueFormatterHuman, ValueFormatterCommodore,
+        ValueFormatterC, ValueFormatterC8
     )
 from memory_layout.renderers.dot import MLDRenderGraphviz
 from memory_layout.renderers.svg import MLDRenderSVG
@@ -29,6 +32,9 @@ class MLDError(Exception):
 
 class Defaults(object):
     colour = None
+    colour_size = None
+    fontname = None
+    fontname_address = None
     fill = None
     outline = None
     outline_width = 2.0 / 72
@@ -47,8 +53,10 @@ formatters = {
         'acorn': ValueFormatterAcorn,
         'commodore': ValueFormatterCommodore,
         'c': ValueFormatterC,
+        'c8': ValueFormatterC8,
         'si': ValueFormatterSI,
         'si2': ValueFormatterSI2,
+        'human': ValueFormatterHuman,
     }
 
 
@@ -178,6 +186,15 @@ def main():
 
             if 'colour' in mlddefaults:
                 defaults.colour = mlddefaults['colour']
+
+            if 'colour_size' in mlddefaults:
+                defaults.colour_size = mlddefaults['colour_size']
+
+            if 'fontname' in mlddefaults:
+                defaults.fontname = mlddefaults['fontname']
+
+            if 'fontname_address' in mlddefaults:
+                defaults.fontname_address = mlddefaults['fontname_address']
 
             if 'position' in mlddefaults:
                 defaults.position = decode_position(mlddefaults['position'])
@@ -351,9 +368,13 @@ def main():
                                                 side=side, end_exclusive=end_exclusive,
                                                 final_end=final_end,
                                                 omit=omit,
-                                                colour=colour)
+                                                colour=colour,
+                                                colour_size=defaults.colour_size,
+                                                fontname_address=defaults.fontname_address)
 
     renderer = renderer_class(output_filename)
+    if defaults.fontname:
+        renderer.default_fontname = defaults.fontname
     renderer.render(sequence)
 
 

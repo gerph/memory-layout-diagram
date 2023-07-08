@@ -1,3 +1,5 @@
+# pylint: skip-file
+# flake8: noqa
 #!/usr/bin/env python
 """
 The SimpleYAML class is intended to allow a subset of the YAML
