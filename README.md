@@ -104,11 +104,14 @@ Address labels can be placed beside the start of the region (at the low position
 The following address formats are defined:
 
 | Name          | Class                     | Example       |
+|---------------|---------------------------|---------------|
 | `acorn`       | `ValueFormatterAcorn`     | `&3800000`    |
 | `commodore`   | `ValueFormatterCommodore` | `$f000`       |
 | `c`           | `ValueFormatterC`         | `0x540000`    |
+| `c8`          | `ValueFormatterC8`        | `0x0054 0000` |
 | `si`          | `ValueFormatterSI`        | `2 MiB`       |
 | `si2`         | `ValueFormatterSI2`       | `3.75 GiB`    |
+| `human`       | `ValueFormatterHuman`     | `3 GB`        |
 
 
 ### Junction boundaries
@@ -144,16 +147,16 @@ Types of data:
 * Positions may use a comma separated canonical position as described above (eg `il,it`), or the following shortcuts:
 
 | Shortcut  | Canonical form | Meaning |
-|-----------|---------------|---------------|
-| `c`       | `ic,ic`       | Centred in both axes |
-| `t`       | `ic,it`       | Top centre |
-| `b`       | `ic,ib`       | Bottom centre |
-| `l`       | `il,ic`       | Left side, vertically centred |
-| `r`       | `ir,ic`       | Right side, vertically centred |
-| `tl`      | `il,it`       | Top left |
-| `tr`      | `ir,it`       | Top right |
-| `bl`      | `il,ib`       | Bottom left |
-| `br`      | `ir,ib`       | Bottom right |
+|-----------|----------------|---------------|
+| `c`       | `ic,ic`        | Centred in both axes |
+| `t`       | `ic,it`        | Top centre |
+| `b`       | `ic,ib`        | Bottom centre |
+| `l`       | `il,ic`        | Left side, vertically centred |
+| `r`       | `ir,ic`        | Right side, vertically centred |
+| `tl`      | `il,it`        | Top left |
+| `tr`      | `ir,it`        | Top right |
+| `bl`      | `il,ib`        | Bottom left |
+| `br`      | `ir,ib`        | Bottom right |
 
 
 ### Defaults
