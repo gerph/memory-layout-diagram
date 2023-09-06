@@ -1,0 +1,86 @@
+%YAML 1.1
+---
+# BBC BASIC for RISC-V memory map, from https://github.com/hoglet67/PiTubeDirect/wiki/RISC-V-Co-Pro-Notes#rvbasic-memory-map
+defaults:
+  # Layout options
+  unit_size: 0x10000
+  unit_height: 0.3
+  min_height: 0.3
+  max_height: 1.0
+  discontinuity_height: 2
+  region_width: 3.25
+
+  # Presentation options
+  background: "#FFF"
+  fill: "#FFF"
+  outline: "#487748"
+  outline_width: 2pt
+  colour: "#487748"
+  position: l
+
+  # Address labels
+  address_format: acorn
+
+layout:
+
+  0x00000000:
+    size: 0x10000
+    labels:
+      "l": Basic String Buffer (64KB)
+
+  0x00010000:
+    size: 0xC00
+    labels:
+      "l": Basic Miscellaneous Buffers (3KB)
+
+  0x00010C00:
+    size: 0x76F400
+    labels:
+      "er,ib": "&00010C00 = default PAGE"
+
+  0x00780000:
+    size: 0x780000
+    labels:
+      "er,ib": "&00780000 = default HIMEM"
+      "er,it": "&00F00000 = maximum HIMEM"
+      "b": "BASIC Program/Workspace"
+    junction_low: ticks
+
+  0x00F00000:
+    size: 0x40000
+    labels:
+      "l": C language heap (256KB, grows upwards)
+
+  0x00F40000:
+    size: 0x40000
+    labels:
+      "l": RISC-V stack (256KB, grows downwards)
+
+  0x00F80000:
+    size: 0x40000
+    labels:
+      "l": BBC Basic (256KB, 140KB used)
+
+  0x00FC0000:
+    size: 0x3FFE0
+    labels:
+      "l": Tube ROM (256KB, 5K used)
+  0x00FFFFE0:
+    size: 0x20
+    labels:
+      "l": Tube Registers
+
+automatic:
+  discontinuities:
+    outline: "#487748"
+    style: cut-out
+
+  addresses:
+    side: left
+    start: true
+    final_end: true
+    end_exclusive: false
+    omit:
+      - 0x7c00
+      - 0x7b00
+      - 0x8000
