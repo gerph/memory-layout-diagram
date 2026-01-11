@@ -1,0 +1,10 @@
+##
+# CODEOWNERS - define who is responsible for parts of the sources
+#
+# See:
+#   https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#   https://docs.gitlab.com/user/project/codeowners/reference/
+#
+
+# Default code owners - automatically assigned for reviews
+* @gerph
