@@ -5,3 +5,6 @@ memory*.png
 mlds/*.dot
 mlds/*.svg
 dist/
+*-actual
+testcode/testdata/output.*
+__pycache__/

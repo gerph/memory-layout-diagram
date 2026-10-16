@@ -1,0 +1,2 @@
+python -m memory_layout: warning: testdata/bad-colour.mld: defaults.fill: Colour 'reddish' is not a CSS colour name, or in #RGB or #RRGGBB form
+python -m memory_layout: warning: testdata/bad-colour.mld: layout '0' outline: Colour '#12' is not a CSS colour name, or in #RGB or #RRGGBB form

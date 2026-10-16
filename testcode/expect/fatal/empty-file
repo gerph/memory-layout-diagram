@@ -1,0 +1,1 @@
+python -m memory_layout: error: testdata/empty-file.mld: The document should be a mapping with 'defaults', 'layout' and 'automatic' sections

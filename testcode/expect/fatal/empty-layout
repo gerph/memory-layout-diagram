@@ -1,0 +1,1 @@
+python -m memory_layout: error: testdata/empty-layout.mld: 'layout' must contain at least one region, as a mapping of addresses to regions

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0.00in 0.00in 4.61in 12.38in" width="4.61in" height="12.38in">
+<defs>
+    <style type="text/css">
+        
+        text {
+            font-family: Optima, Rachana, Sawasdee, sans-serif;
+        }
+    </style>
+</defs>
+<g transform="matrix(1.000000 0.000000 0.000000 1.000000 12.000000 12.000000)">
+  <rect x="-0.125in" y="-0.125in" width="4.605in" height="12.375in" fill="#000"/>
+  <rect x="0in" y="0in" width="2.750in" height="0.750in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="0.750in" width="2.750in" height="0.750in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="1.500in" width="2.750in" height="0.500in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="2in" width="2.750in" height="0.750in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="2.750in" width="2.750in" height="0.750in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="3.500in" width="2.750in" height="0.750in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="4.250in" width="2.750in" height="0.500in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="4.750in" width="2.750in" height="0.750in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="5.500in" width="2.750in" height="0.625in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="6.125in" width="2.750in" height="0.500in" fill="#000"/>
+  <rect x="0in" y="6.625in" width="2.750in" height="0.750in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="7.375in" width="2.750in" height="0.500in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="7.875in" width="2.750in" height="0.750in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="8.625in" width="2.750in" height="0.500in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="9.125in" width="2.750in" height="0.500in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="9.625in" width="2.750in" height="0.500in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="10.125in" width="2.750in" height="0.500in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="10.625in" width="2.750in" height="0.500in" fill="#000"/>
+  <rect x="0in" y="11.125in" width="2.750in" height="0.500in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <rect x="0in" y="11.625in" width="2.750in" height="0.500in" fill="#000" stroke="#90EE90" stroke-width="0.028in"/>
+  <g>
+    <text x="0.050in" y="0.375in" fill="#90EE90" style="dominant-baseline: middle;">Machine Operating System (MOS)</text>
+    <text x="2.855in" y="0.700in" fill="#90EE90">&amp;C000</text>
+    <text x="2.855in" y="0.050in" fill="#90EE90" style="dominant-baseline: hanging;">&amp;FFFF</text>
+    <text x="0.050in" y="1.125in" fill="#90EE90" style="dominant-baseline: middle;">Paged ROMs</text>
+    <text x="2.855in" y="1.450in" fill="#90EE90">&amp;8000</text>
+    <text x="0.050in" y="1.750in" fill="#90EE90" style="dominant-baseline: middle;">Python blueprint (PYTHON.bin)</text>
+    <text x="2.855in" y="1.950in" fill="#90EE90">&amp;7F00</text>
+    <text x="0.050in" y="2.375in" fill="#90EE90" style="dominant-baseline: middle;">Memory for split screen</text>
+    <text x="2.855in" y="2.700in" fill="#90EE90">&amp;6000</text>
+    <text x="0.050in" y="3.125in" fill="#90EE90" style="dominant-baseline: middle;">Ship blueprints (SHIPS.bin)</text>
+    <text x="2.855in" y="3.450in" fill="#90EE90">&amp;563A = XX21</text>
+    <text x="0.050in" y="3.875in" fill="#90EE90" style="dominant-baseline: middle;">Main game code (ELTcode.bin)</text>
+    <text x="2.855in" y="4.200in" fill="#90EE90">&amp;0F40 = S%</text>
+    <text x="0.050in" y="4.500in" fill="#90EE90" style="dominant-baseline: middle;">&amp;0F34-&amp;F3F unused</text>
+    <text x="2.855in" y="4.700in" fill="#90EE90">&amp;0F34</text>
+    <text x="0.050in" y="5.125in" fill="#90EE90" style="dominant-baseline: middle;">WP workspace</text>
+    <text x="2.855in" y="5.450in" fill="#90EE90">&amp;0D40 = WP</text>
+    <text x="0.050in" y="5.812in" fill="#90EE90" style="dominant-baseline: middle;">Ship data blocks descend from WP</text>
+    <text x="2.855in" y="6.075in" fill="#90EE90">SLSP</text>
+    <path fill="none" stroke="#90ee90" stroke-width="0.028in" stroke-linecap="square" d="M 0 588 L 264 588 M 0 636 L 264 636"/>
+    <path fill="none" stroke="#90ee90" stroke-width="0.028in" stroke-linecap="square" stroke-dasharray="0.111in,0.056in" d="M 0 588 L 0 636 M 264 588 L 264 636"/>
+    <text x="0.050in" y="7in" fill="#90EE90" style="dominant-baseline: middle;">Ship data blocks ascend from K%</text>
+    <text x="2.855in" y="7.325in" fill="#90EE90">&amp;0900 = K%</text>
+    <text x="0.050in" y="7.625in" fill="#90EE90" style="dominant-baseline: middle;">MOS sound/printer workspace</text>
+    <text x="2.855in" y="7.825in" fill="#90EE90">&amp;0800</text>
+    <text x="0.050in" y="8.250in" fill="#90EE90" style="dominant-baseline: middle;">Recursive tokens (WORDS9.bin)</text>
+    <text x="2.855in" y="8.575in" fill="#90EE90">&amp;0400 = QQ18</text>
+    <text x="0.050in" y="8.875in" fill="#90EE90" style="dominant-baseline: middle;">MOS tape filing system workspace</text>
+    <text x="2.855in" y="9.075in" fill="#90EE90">&amp;0372</text>
+    <text x="0.050in" y="9.375in" fill="#90EE90" style="dominant-baseline: middle;">T% workspace</text>
+    <text x="2.855in" y="9.575in" fill="#90EE90">&amp;0300 = T%</text>
+    <text x="0.050in" y="9.875in" fill="#90EE90" style="dominant-baseline: middle;">MOS general workspace</text>
+    <text x="2.855in" y="10.075in" fill="#90EE90">&amp;0200</text>
+    <text x="0.050in" y="10.375in" fill="#90EE90" style="dominant-baseline: middle;">6502 stack descends from &amp;01FF</text>
+    <path fill="none" stroke="#90ee90" stroke-width="0.028in" stroke-linecap="square" d="M 0 1020 L 264 1020 M 0 1068 L 264 1068"/>
+    <path fill="none" stroke="#90ee90" stroke-width="0.028in" stroke-linecap="square" stroke-dasharray="0.111in,0.056in" d="M 0 1020 L 0 1068 M 264 1020 L 264 1068"/>
+    <text x="0.050in" y="11.375in" fill="#90EE90" style="dominant-baseline: middle;">Heap space ascends from XX3</text>
+    <text x="2.855in" y="11.575in" fill="#90EE90">&amp;0100 = XX3</text>
+    <text x="0.050in" y="11.875in" fill="#90EE90" style="dominant-baseline: middle;">Zero page workspace</text>
+    <text x="2.855in" y="12.075in" fill="#90EE90">&amp;0000 = ZP</text>
+  </g>
+</g>
+
+</svg>

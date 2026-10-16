@@ -1,0 +1,1 @@
+python -m memory_layout: error: testdata/text-after-quote.mld: line 2: Quoted string is not terminated (or has text after the closing quote): "abc" def

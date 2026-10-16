@@ -1,0 +1,3 @@
+python -m memory_layout: warning: testdata/wrong-sections.mld: 'defaults' should be a mapping of keys to values
+python -m memory_layout: warning: testdata/wrong-sections.mld: automatic.discontinuities: 'lots' should be true, false or a mapping
+python -m memory_layout: warning: testdata/wrong-sections.mld: automatic.addresses: '7' should be true, false or a mapping

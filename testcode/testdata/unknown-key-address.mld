@@ -1,0 +1,5 @@
+layout:
+  0x0000: Low
+  0x1000: High
+automatic:
+  address: true

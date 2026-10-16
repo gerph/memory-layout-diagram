@@ -1,0 +1,1 @@
+python -m memory_layout: warning: testdata/bad-side.mld: automatic.addresses.side: 'up' is not one of: left, right

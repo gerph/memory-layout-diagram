@@ -1,0 +1,1 @@
+python -m memory_layout: warning: testdata/bad-junction.mld: layout '0' junction_low: 'wavy' is not one of: solid, dotted, dashed, double, ticks, none

@@ -1,0 +1,1 @@
+python -m memory_layout: error: testdata/inline-list.mld: line 2: flow style (inline lists) is not supported (in '[unterminated'); quote the value if it is plain text

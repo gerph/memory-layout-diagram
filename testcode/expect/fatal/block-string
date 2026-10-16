@@ -1,0 +1,1 @@
+python -m memory_layout: error: testdata/block-string.mld: line 2: block strings are not supported (in '|'); quote the value if it is plain text

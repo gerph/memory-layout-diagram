@@ -1,0 +1,1 @@
+python -m memory_layout: warning: testdata/unknown-key-region.mld: Unknown key 'lable' in layout '0' (did you mean 'label'?)

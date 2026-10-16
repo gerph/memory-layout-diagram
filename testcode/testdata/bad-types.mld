@@ -1,0 +1,10 @@
+defaults:
+  unit_size: big
+layout:
+  0:
+    size: -4
+    discontinuity: maybe
+automatic:
+  addresses:
+    start: 1
+    omit: nowhere

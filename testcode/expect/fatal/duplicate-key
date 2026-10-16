@@ -1,0 +1,1 @@
+python -m memory_layout: error: testdata/duplicate-key.mld: line 3: Duplicate key '0'

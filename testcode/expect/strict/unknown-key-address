@@ -1,0 +1,1 @@
+python -m memory_layout: error: testdata/unknown-key-address.mld: Unknown key 'address' in 'automatic' (did you mean 'addresses'?)

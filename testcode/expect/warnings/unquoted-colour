@@ -1,0 +1,1 @@
+python -m memory_layout: warning: testdata/unquoted-colour.mld: defaults.fill: No colour was given (colours starting with '#' must be quoted)

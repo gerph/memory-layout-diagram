@@ -1,0 +1,5 @@
+python -m memory_layout: warning: testdata/bad-types.mld: defaults.unit_size: 'big' should be a whole number of at least 1
+python -m memory_layout: warning: testdata/bad-types.mld: layout '0' discontinuity: 'maybe' should be true or false
+python -m memory_layout: warning: testdata/bad-types.mld: layout '0' size: '-4' should be a whole number of at least 1
+python -m memory_layout: warning: testdata/bad-types.mld: automatic.addresses.start: '1' should be true or false
+python -m memory_layout: warning: testdata/bad-types.mld: automatic.addresses.omit: 'nowhere' should be an address, or a list of addresses

@@ -1,0 +1,1 @@
+python -m memory_layout: warning: testdata/bad-style.mld: automatic.discontinuities.style: 'sparkly' is not one of: default, zig-zag, cut-out, dotted, dashed

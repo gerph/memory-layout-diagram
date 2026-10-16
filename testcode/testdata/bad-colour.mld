@@ -1,0 +1,6 @@
+defaults:
+  fill: reddish
+layout:
+  0:
+    label: A
+    outline: "#12"

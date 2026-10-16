@@ -1,0 +1,1 @@
+python -m memory_layout: error: testdata/no-layout.mld: 'layout' not defined

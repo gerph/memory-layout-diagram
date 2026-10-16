@@ -1,0 +1,6 @@
+defaults: 3
+layout:
+  0: A
+automatic:
+  addresses: 7
+  discontinuities: lots

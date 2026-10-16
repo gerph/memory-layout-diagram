@@ -1,0 +1,5 @@
+#!/bin/sh
+##
+# Run the Memory Layout Diagram tool from this source tree, for testing.
+here=$(cd "$(dirname "$0")" && pwd)
+PYTHONPATH="$here/.." exec python3 -m memory_layout "$@"

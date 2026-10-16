@@ -1,0 +1,6 @@
+defaults:
+  unit_height: tall
+  max_height: -1
+  region_width: 3cm
+layout:
+  0: A

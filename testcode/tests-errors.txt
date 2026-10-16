@@ -1,0 +1,208 @@
+Suite: errors
+
+# Syntax errors and unusable documents are fatal: nothing is written, and the
+# return code is non-zero.
+
+Group: Syntax errors
+Command: $TOOL $ARG1 --output testdata/output.svg
+RC: 1
+Absent: testdata/output.svg
+
+Test: Inline list
+Args: testdata/inline-list.mld
+Expect: expect/fatal/inline-list
+
+Test: Unterminated quote
+Args: testdata/unterminated-quote.mld
+Expect: expect/fatal/unterminated-quote
+
+Test: Text after closing quote
+Args: testdata/text-after-quote.mld
+Expect: expect/fatal/text-after-quote
+
+Test: Duplicate key
+Args: testdata/duplicate-key.mld
+Expect: expect/fatal/duplicate-key
+
+Test: Block string
+Args: testdata/block-string.mld
+Expect: expect/fatal/block-string
+
+Group: Unusable documents
+Command: $TOOL $ARG1 --output testdata/output.svg
+RC: 1
+Absent: testdata/output.svg
+
+Test: No layout section
+Args: testdata/no-layout.mld
+Expect: expect/fatal/no-layout
+
+Test: Empty layout section
+Args: testdata/empty-layout.mld
+Expect: expect/fatal/empty-layout
+
+Test: Unrecognised address
+Args: testdata/bad-address.mld
+Expect: expect/fatal/bad-address
+
+Test: Empty file
+Args: testdata/empty-file.mld
+Expect: expect/fatal/empty-file
+
+Test: Document is a list
+Args: testdata/not-a-mapping.mld
+Expect: expect/fatal/not-a-mapping
+
+Group: Missing input
+Command: $TOOL $ARG1 --output testdata/output.svg
+RC: 1
+Absent: testdata/output.svg
+
+Test: Input file does not exist
+Args: testdata/does-not-exist.mld
+Expect: expect/fatal/does-not-exist
+
+# Problems which have a sensible fallback are warnings: the diagram is still written.
+
+Group: Warnings
+Command: $TOOL $ARG1 --output testdata/output.svg
+RC: 0
+Creates: testdata/output.svg
+
+Test: Unknown key: address for addresses
+Args: testdata/unknown-key-address.mld
+Expect: expect/warnings/unknown-key-address
+
+Test: Unknown top level key
+Args: testdata/unknown-key-top.mld
+Expect: expect/warnings/unknown-key-top
+
+Test: Unknown defaults key
+Args: testdata/unknown-key-defaults.mld
+Expect: expect/warnings/unknown-key-defaults
+
+Test: Unknown region key
+Args: testdata/unknown-key-region.mld
+Expect: expect/warnings/unknown-key-region
+
+Test: Unknown label key
+Args: testdata/unknown-key-label.mld
+Expect: expect/warnings/unknown-key-label
+
+Test: Invalid colours
+Args: testdata/bad-colour.mld
+Expect: expect/warnings/bad-colour
+
+Test: Unquoted colour is a comment
+Args: testdata/unquoted-colour.mld
+Expect: expect/warnings/unquoted-colour
+
+Test: Invalid distances
+Args: testdata/bad-distance.mld
+Expect: expect/warnings/bad-distance
+
+Test: Invalid label positions
+Args: testdata/bad-position.mld
+Expect: expect/warnings/bad-position
+
+Test: Invalid junction type
+Args: testdata/bad-junction.mld
+Expect: expect/warnings/bad-junction
+
+Test: Invalid discontinuity style
+Args: testdata/bad-style.mld
+Expect: expect/warnings/bad-style
+
+Test: Invalid address side
+Args: testdata/bad-side.mld
+Expect: expect/warnings/bad-side
+
+Test: Invalid types for values
+Args: testdata/bad-types.mld
+Expect: expect/warnings/bad-types
+
+Test: Sections of the wrong type
+Args: testdata/wrong-sections.mld
+Expect: expect/warnings/wrong-sections
+
+Test: Unrecognised address formatter
+Args: testdata/bad-formatter.mld
+Expect: expect/warnings/bad-formatter
+
+Test: Same address given twice
+Args: testdata/same-address.mld
+Expect: expect/warnings/same-address
+
+# --strict turns the warnings into errors, and stops the diagram being written.
+
+Group: Strict mode
+Command: $TOOL --strict $ARG1 --output testdata/output.svg
+RC: 1
+Absent: testdata/output.svg
+
+Test: Unknown key
+Args: testdata/unknown-key-address.mld
+Expect: expect/strict/unknown-key-address
+
+Test: Invalid colours
+Args: testdata/bad-colour.mld
+Expect: expect/strict/bad-colour
+
+Test: Invalid label positions
+Args: testdata/bad-position.mld
+Expect: expect/strict/bad-position
+
+Test: Syntax errors are still errors
+Args: testdata/inline-list.mld
+Expect: expect/strict/inline-list
+
+Group: Strict mode accepts good files
+Command: $TOOL --strict $ARG1 --output testdata/output.svg
+RC: 0
+Creates: testdata/output.svg
+Expect: expect/strict/clean
+
+Test: Example armmcu
+Args: ../mlds/armmcu.mld
+
+Test: Example bbc
+Args: ../mlds/bbc.mld
+
+Test: Example elite-bbc
+Args: ../mlds/elite-bbc.mld
+
+Test: Example riscos
+Args: ../mlds/riscos.mld
+
+Test: Example riscv-bbcbasic
+Args: ../mlds/riscv-bbcbasic.mld
+
+Group: Rendering
+Command: $TOOL $ARG1 --output testdata/output.svg
+RC: 0
+Expect: expect/rendering/clean
+Creates: testdata/output.svg
+
+Test: Address labels are drawn with addresses: true
+Args: testdata/addresses.mld
+Text:Matches: expect/rendering/addresses.svg
+
+Test: Example armmcu renders unchanged
+Args: ../mlds/armmcu.mld
+Text:Matches: expect/rendering/armmcu.svg
+
+Test: Example bbc renders unchanged
+Args: ../mlds/bbc.mld
+Text:Matches: expect/rendering/bbc.svg
+
+Test: Example elite-bbc renders unchanged
+Args: ../mlds/elite-bbc.mld
+Text:Matches: expect/rendering/elite-bbc.svg
+
+Test: Example riscos renders unchanged
+Args: ../mlds/riscos.mld
+Text:Matches: expect/rendering/riscos.svg
+
+Test: Example riscv-bbcbasic renders unchanged
+Args: ../mlds/riscv-bbcbasic.mld
+Text:Matches: expect/rendering/riscv-bbcbasic.svg

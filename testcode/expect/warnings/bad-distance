@@ -1,0 +1,3 @@
+python -m memory_layout: warning: testdata/bad-distance.mld: defaults.unit_height: Distance 'tall' is not a number of inches, or a number of points with a 'pt' suffix
+python -m memory_layout: warning: testdata/bad-distance.mld: defaults.max_height: Distance '-1' must not be negative
+python -m memory_layout: warning: testdata/bad-distance.mld: defaults.region_width: Distance '3cm' is not a number of inches, or a number of points with a 'pt' suffix

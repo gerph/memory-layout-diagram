@@ -1,0 +1,4 @@
+defaults:
+  address_format: shiny
+layout:
+  0: A

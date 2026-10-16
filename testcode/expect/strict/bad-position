@@ -1,0 +1,2 @@
+python -m memory_layout: error: testdata/bad-position.mld: layout '0' label 1 position: Unrecognised label position 'middle'
+python -m memory_layout: error: testdata/bad-position.mld: layout '0' label 2 position: Unrecognised vertical label position 'zz' in 'il,zz'. Valid values are: ib, ic, it, jt, jb

@@ -1,0 +1,6 @@
+layout:
+  0: A
+  100: B
+automatic:
+  discontinuities:
+    style: sparkly

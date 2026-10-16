@@ -1,0 +1,1 @@
+python -m memory_layout: warning: testdata/same-address.mld: Layout addresses '16' and '0x10' are the same address; one will be lost

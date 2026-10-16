@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0.00in 0.00in 3.09in 1.50in" width="3.09in" height="1.50in">
+<defs>
+    <style type="text/css">
+        
+        text {
+            font-family: Optima, Rachana, Sawasdee, sans-serif;
+        }
+    </style>
+</defs>
+<g transform="matrix(1.000000 0.000000 0.000000 1.000000 12.000000 12.000000)">
+  <rect x="-0.125in" y="-0.125in" width="3.090in" height="1.500in" fill="#fff"/>
+  <rect x="0in" y="0in" width="2in" height="0.625in" fill="#fff" stroke="#000" stroke-width="0.028in"/>
+  <rect x="0in" y="0.625in" width="2in" height="0.625in" fill="#fff" stroke="#000" stroke-width="0.028in"/>
+  <g>
+    <text x="1in" y="0.312in" style="text-anchor: middle; dominant-baseline: middle;">High</text>
+    <text x="2.090in" y="0.625in" style="dominant-baseline: middle;">0x1000</text>
+    <text x="1in" y="0.938in" style="text-anchor: middle; dominant-baseline: middle;">Low</text>
+    <text x="2.090in" y="1.200in">0x0</text>
+  </g>
+</g>
+
+</svg>
