@@ -205,7 +205,7 @@ class SimpleYAML(object):
             return None
 
         # Integer types
-        if s[0] == '0':
+        if s[0] == '0' and len(s) > 1:
             snum = s.replace('_', '')
             if s[1] == 'x' and self.is_hex(snum[2:]):
                 return int(snum[2:], 16)

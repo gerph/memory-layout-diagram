@@ -152,7 +152,7 @@ def decode_position(simple_position):
 def decode_formatter(format_name):
     cls = formatters.get(format_name, None)
     if not cls:
-        raise MLDError("Unrecognised formatter name '{}'. Valid names are: {}'"
+        raise MLDError("Unrecognised formatter name '{}'. Valid names are: {}"
                             .format(format_name, ', '.join(sorted(formatters))))
     return cls()
 
