@@ -8,3 +8,4 @@ dist/
 *-actual
 testcode/testdata/output.*
 __pycache__/
+test-results/

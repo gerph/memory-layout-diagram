@@ -1,0 +1,136 @@
+---
+# Run the unit and expectation tests, build the package and documentation, and
+# publish a release for a v* tag.
+
+name: CI
+
+on:
+  push:
+    branches: ["*"]
+    tags: ["v*"]
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: ["*"]
+  workflow_dispatch:
+
+env:
+  # The release of riscos-tooltester used to run the expectation tests.
+  # 'latest/download' takes the newest; use 'download/v<version>' to pin one.
+  TOOLTESTER_RELEASE: latest/download
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install the test tools
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          . "$RUNNER_TEMP/venv/bin/activate"
+          pip install unittest-xml-reporting
+          curl -fsSL -o "$RUNNER_TEMP/riscos-tooltester" \
+              "https://github.com/gerph/riscos-tooltester/releases/$TOOLTESTER_RELEASE/riscos-tooltester"
+          chmod +x "$RUNNER_TEMP/riscos-tooltester"
+          mkdir -p test-results
+
+      - name: Unit tests
+        run: |
+          . "$RUNNER_TEMP/venv/bin/activate"
+          python -m xmlrunner discover -s testcode -o test-results/unit
+
+      - name: Expectation tests
+        if: success() || failure()
+        run: |
+          . "$RUNNER_TEMP/venv/bin/activate"
+          "$RUNNER_TEMP/riscos-tooltester" -show-command -show-output \
+              -junitxml "$PWD/test-results/integration.xml" \
+              "$PWD/testcode/mld" testcode
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v6
+        if: success() || failure()
+        with:
+          report_paths: 'test-results/**/*.xml'
+          check_name: Test Report
+
+  package:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # ci-vars counts the commits, so it needs the complete history.
+          fetch-depth: 0
+
+      - name: Calculate the version
+        id: version
+        run: |
+          eval "$(./ci-vars)"
+          echo "Version: $CI_PROJECT_VERSION"
+          echo "version=$CI_PROJECT_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build the source distribution
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          . "$RUNNER_TEMP/venv/bin/activate"
+          pip install setuptools
+          ./package.sh
+          mkdir -p release
+          cp dist/*.tar.gz release/
+          ls -l release
+
+      - name: Build the documentation
+        uses: gerph/riscos-prminxml-action@v1
+        with:
+          files: prminxml/mld.xml
+          output: site
+          style: prm
+          css-variant: large-bullets
+
+      - name: Package the documentation
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cp site/mld.html site/index.html
+          (cd site && zip -9r "../release/memory-layout-docs-$VERSION.zip" .)
+          ls -l release
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Release
+          path: release
+
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Check that the tag is the version
+        env:
+          VERSION: ${{ needs.package.outputs.version }}
+        run: |
+          if [ "$GITHUB_REF_NAME" != "v$VERSION" ] ; then
+              echo "Tag $GITHUB_REF_NAME does not match the version v$VERSION of this commit" >&2
+              exit 1
+          fi
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: Release
+          path: release
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          prerelease: false
+          draft: false
+          artifacts: "release/*"

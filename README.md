@@ -1,5 +1,7 @@
 # Memory layout diagrams
 
+[![Documentation](https://img.shields.io/badge/Generated-Documentation-yellow)](https://gerph.github.io/memory-layout-diagram/)
+
 ## Introduction
 
 The Memory Layout Diagram tool is intended to produce graphical diagrams of the layout of memory regions in a system. These are most useful in describing retro systems, or systems which have fixed logical memory maps. They are commonly used to explain the layout of memory regions in developer guides for hardware systems.
@@ -47,9 +49,15 @@ The tool checks the `.mld` file as it reads it, and reports what it finds on std
 
 Colours which start with `#` must be quoted (for example `fill: "#FFF"`), as otherwise YAML treats the text as a comment.
 
+## Documentation
+
+The format and the command are also described in a manual, written as PRM-in-XML in `prminxml/mld.xml`. It is published to [GitHub Pages](https://gerph.github.io/memory-layout-diagram/) on each change to `master`, and is included in each release with the source distribution.
+
+Releases are made by pushing a tag of the form `v<version>` for a commit on `master`. The version is `<major>.<minor>.<count>`, where the major and minor numbers are set in `project.config` and the count is the number of commits on `master`.
+
 ## Testing
 
-`make tests` runs the unit tests (`make unittests`, using `unittest`) and the expectation tests for the command (`make integration`, using `riscos-tooltester` and the suites in `testcode/`).
+`make tests` runs the unit tests (`make unittests`, using `unittest`) and the expectation tests for the command (`make integration`, using [`riscos-tooltester`](https://github.com/gerph/riscos-tooltester) and the suites in `testcode/`). The workflow in `.github/workflows/ci.yml` runs both, and reports the results with the checks of the commit or pull request.
 
 ## Renderers (output formats)
 

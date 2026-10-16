@@ -1,0 +1,60 @@
+---
+# Publish a single PRM-in-XML document to GitHub Pages in the RISC OS 3 PRM style.
+# Pages must be enabled with the source set to 'GitHub Actions'.
+
+name: Documentation
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: ["*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build PRM-in-XML documentation in RISC OS 3 PRM style
+        uses: gerph/riscos-prminxml-action@v1
+        with:
+          files: prminxml/mld.xml
+          output: site
+          style: prm
+          css-variant: large-bullets
+
+      - name: Assemble the site
+        run: |
+          cp site/mld.html site/index.html
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Documentation
+          path: site
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  publish:
+    needs: build-docs
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
