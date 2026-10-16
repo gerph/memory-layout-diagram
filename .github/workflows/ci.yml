@@ -72,7 +72,7 @@ jobs:
       - name: Calculate the version
         id: version
         run: |
-          eval "$(./ci-vars)"
+          eval "$(./ci-vars --repo .)"
           echo "Version: $CI_PROJECT_VERSION"
           echo "version=$CI_PROJECT_VERSION" >> "$GITHUB_OUTPUT"
 
