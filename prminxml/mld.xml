@@ -1,0 +1,495 @@
+<?xml version="1.0"?>
+<!DOCTYPE riscos-prm PUBLIC "-//Gerph//DTD PRM documentation 1.03//EN"
+                            "http://gerph.org/dtd/103/prm.dtd">
+
+<riscos-prm>
+ <chapter title="Memory Layout Diagrams">
+<section title="Overview">
+<p>
+A memory layout diagram describes how the address space of a system is divided
+into regions, and the <userinput>.mld</userinput> file format is the text
+description from which such a diagram is drawn. Diagrams of this kind are common
+in hardware and operating system documentation, where a fixed memory map is
+explained by a column of labelled blocks with the lowest address at the bottom.
+</p>
+
+<p>
+The description is kept as a small text file, so it can be held in source
+control and the picture redrawn whenever the layout changes.
+The <userinput>mld</userinput> command, from the Memory Layout Diagram tool,
+draws it as an SVG image. It checks the description as it reads it, and reports
+anything it does not understand; this is described in
+<em>Errors and warnings</em>, below. The tool is installed with
+<userinput>pip install memory-layout</userinput>, and can also be run as
+<userinput>python -m memory_layout</userinput>. In the RISC OS Build Environment
+it is available as <userinput>riscos-mld</userinput>.
+</p>
+
+<p>
+A <userinput>.mld</userinput> file has no RISC OS filetype. It is recognised
+by its <userinput>.mld</userinput> extension.
+</p>
+</section>
+
+<section title="Concepts">
+<subsection title="Regions and the layout">
+<p>
+A <em>memory region</em> is a block of continuous address space,
+drawn as a rectangle. The ordered collection of regions is the
+<em>layout</em>, and it is always drawn with the lowest address at
+the bottom and the highest at the top.
+</p>
+
+<p>
+A gap between the end of one region and the start of the next is a
+<em>discontinuity</em>. Discontinuities are usually memory that is
+not allocated, or that is grown into as the system is used. They may be
+described explicitly, or filled in automatically.
+</p>
+</subsection>
+
+<subsection title="Sizes and units">
+<p>
+A region's drawn height is its size in bytes divided by the
+<userinput>unit_size</userinput>, multiplied by the <userinput>unit_height</userinput>,
+then limited to between <userinput>min_height</userinput> and
+<userinput>max_height</userinput>. The limits stop a very large region from
+making the diagram excessively tall, and a very small one from being too short
+to hold its text. A region with no size is one <userinput>unit_size</userinput>
+long. Every region, and the text columns beside the regions, has the same
+width, <userinput>region_width</userinput>.
+</p>
+
+<p>
+Distances are in inches. A distance may instead be given in points (1/72 of an
+inch) by following the number with <userinput>pt</userinput>, for example
+<userinput>2pt</userinput>.
+</p>
+</subsection>
+
+<subsection title="Labels">
+<p>
+Each region may have any number of labels. A label is placed relative to the
+region, inside it, outside it to the left or right, or on the junction at its
+top or bottom. A label position is two parts separated by a comma, the
+horizontal position and then the vertical position, such as
+<userinput>il,it</userinput> for inside the region at the top left.
+</p>
+
+<p>
+<definition-table head-name="Horizontal" head-value="Meaning">
+ <definition name="il">Inside the region, left aligned.</definition>
+ <definition name="ic">Inside the region, centred.</definition>
+ <definition name="ir">Inside the region, right aligned.</definition>
+ <definition name="el">To the left of the region, right aligned against its edge.</definition>
+ <definition name="elm">To the left of the region, centred.</definition>
+ <definition name="elf">To the left of the region, left aligned away from the edge.</definition>
+ <definition name="er">To the right of the region, left aligned against its edge.</definition>
+ <definition name="erm">To the right of the region, centred.</definition>
+ <definition name="erf">To the right of the region, right aligned away from the edge.</definition>
+</definition-table>
+</p>
+
+<p>
+<definition-table head-name="Vertical" head-value="Meaning">
+ <definition name="it">Inside the region, aligned to the top.</definition>
+ <definition name="ic">Inside the region, centred.</definition>
+ <definition name="ib">Inside the region, aligned to the bottom.</definition>
+ <definition name="jt">Centred on the junction at the top of the region.</definition>
+ <definition name="jb">Centred on the junction at the bottom of the region.</definition>
+</definition-table>
+</p>
+
+<p>
+The commonest positions have shorter names, which can be used in place of the
+two-part form.
+</p>
+
+<p>
+<definition-table head-name="Shortcut" head-extra="Full form" head-value="Meaning">
+ <definition name="c" extra="ic,ic">Centred in both directions.</definition>
+ <definition name="t" extra="ic,it">Top centre.</definition>
+ <definition name="b" extra="ic,ib">Bottom centre.</definition>
+ <definition name="l" extra="il,ic">Left side, vertically centred.</definition>
+ <definition name="r" extra="ir,ic">Right side, vertically centred.</definition>
+ <definition name="tl" extra="il,it">Top left.</definition>
+ <definition name="tr" extra="ir,it">Top right.</definition>
+ <definition name="bl" extra="il,ib">Bottom left.</definition>
+ <definition name="br" extra="ir,ib">Bottom right.</definition>
+</definition-table>
+</p>
+
+<p>
+The text of a label may contain <userinput>\n</userinput> to start a new line.
+</p>
+</subsection>
+
+<subsection title="Colours">
+<p>
+A colour is a CSS colour name, or a hexadecimal colour in the form
+<userinput>#RGB</userinput> or <userinput>#RRGGBB</userinput>. A colour in
+either hexadecimal form must be quoted in the file, because
+<userinput>#</userinput> otherwise starts a comment: <userinput>fill: #FFF</userinput>
+gives the field no value at all. The tool reports a colour field which has no
+value, and any colour that it does not recognise.
+</p>
+</subsection>
+</section>
+
+<section title="File structure">
+<subsection title="The description language">
+<p>
+A <userinput>.mld</userinput> file is a text file in a restricted form of YAML.
+It holds a mapping with up to three keys, <userinput>defaults</userinput>,
+<userinput>layout</userinput> (which is required) and
+<userinput>automatic</userinput>. A key that is not described in this
+chapter is reported as a warning, with the name of the key it is most like,
+so a misspelt key is noticed.
+</p>
+
+<p>
+The restricted form of YAML supports mappings, lists, comments, plain and
+quoted single-line strings, integers (decimal, hexadecimal, binary and octal),
+floating point numbers, <userinput>true</userinput> and
+<userinput>false</userinput>, and an optional <userinput>%YAML 1.1</userinput>
+line and <userinput>---</userinput> document marker at the start. It does not
+support flow style (inline <userinput>{ }</userinput> and
+<userinput>[ ]</userinput>), block strings, anchors and aliases, type tags, or
+more than one document. Use indented block mappings and lists throughout. The
+words <userinput>yes</userinput> and <userinput>no</userinput> are not
+booleans; write <userinput>true</userinput> or <userinput>false</userinput>.
+A line which uses syntax that is not supported, a quoted string which is not
+closed, or a key which is given twice in a mapping, is an error, and the tool
+reports the number of the line.
+</p>
+
+<p>
+<extended-example type="format">
+%YAML 1.1<br/>
+---<br/>
+# Comments start with a hash.<br/>
+defaults:<br/>
+&nbsp;&nbsp;unit_size: 0x1000<br/>
+layout:<br/>
+&nbsp;&nbsp;0x0000: Low memory<br/>
+automatic:<br/>
+&nbsp;&nbsp;discontinuities: true
+</extended-example>
+</p>
+</subsection>
+
+<subsection title="The defaults block">
+<p>
+The <userinput>defaults</userinput> block sets the size and appearance of the
+diagram, and the defaults for the regions in it. Every field is optional.
+</p>
+
+<p>
+<definition-table head-name="Field" head-value="Meaning">
+ <definition name="unit_size">The number of bytes drawn as one unit of height, and the size of a region that gives none.</definition>
+ <definition name="unit_height">The drawn height of one <userinput>unit_size</userinput>, as a distance.</definition>
+ <definition name="min_height">The smallest height of a region, as a distance.</definition>
+ <definition name="max_height">The largest height of a region, as a distance.</definition>
+ <definition name="discontinuity_height">The largest height of a discontinuity, as a distance.</definition>
+ <definition name="region_width">The width of the regions, and of the text columns beside them, as a distance.</definition>
+ <definition name="background">The background colour of the diagram.</definition>
+ <definition name="fill">The default fill colour of regions.</definition>
+ <definition name="outline">The default colour of region outlines.</definition>
+ <definition name="outline_width">The default width of region outlines, as a distance.</definition>
+ <definition name="colour">The default colour of label text.</definition>
+ <definition name="colour_size">The colour of the automatic size labels.</definition>
+ <definition name="fontname">The font used for labels.</definition>
+ <definition name="fontname_address">The font used for the automatic address labels.</definition>
+ <definition name="position">The default position of a label which gives none. The default is <userinput>c</userinput>.</definition>
+ <definition name="address_format">The name of the format used for automatic addresses, from the list below.</definition>
+ <definition name="size_format">The name of the format used for automatic sizes, from the list below.</definition>
+</definition-table>
+</p>
+
+<p>
+An address or size format is one of the following names. The examples show how
+the value &amp;540000 (5.25 MiB) is written.
+</p>
+
+<p>
+<definition-table head-name="Name" head-extra="Example" head-value="Style">
+ <definition name="acorn" extra="&amp;540000">An ampersand and hexadecimal digits, as used by RISC OS.</definition>
+ <definition name="commodore" extra="$540000">A dollar sign and hexadecimal digits.</definition>
+ <definition name="c" extra="0x540000">C style hexadecimal.</definition>
+ <definition name="c8" extra="0x0054 0000">C style hexadecimal, as two groups of four digits.</definition>
+ <definition name="si" extra="5376.0 KiB">A size in binary units, shown exactly.</definition>
+ <definition name="si2" extra="5.25 MiB">A size in binary units, to the nearest quarter of a unit.</definition>
+ <definition name="human" extra="5 MB">A size in whole units such as KB, MB or GB.</definition>
+</definition-table>
+</p>
+</subsection>
+
+<subsection title="The layout block">
+<p>
+The required <userinput>layout</userinput> block is a mapping with one entry for
+each region. The key is the address at which the region starts, written in
+decimal or as C style hexadecimal starting <userinput>0x</userinput>. The regions
+are sorted by address, so they may be written in any order. An address that is
+neither is an error.
+</p>
+
+<p>
+The value is either a string, which is the label of a region of the default
+size, or a mapping with these keys:
+</p>
+
+<p>
+<definition-table head-name="Key" head-value="Meaning">
+ <definition name="size">The size of the region in bytes. If omitted, the region is one <userinput>unit_size</userinput> long.</definition>
+ <definition name="label">A single label, placed at the default position.</definition>
+ <definition name="labels">Several labels, given as a mapping keyed by position. Each value is the text of the label, or a mapping with <userinput>label</userinput> (the text), <userinput>position</userinput> (overriding the key) and <userinput>colour</userinput> (the colour of the text).</definition>
+ <definition name="discontinuity">Set to <userinput>true</userinput> if the region is a discontinuity.</definition>
+ <definition name="fill">The fill colour of the region.</definition>
+ <definition name="outline">The colour of the outline of the region.</definition>
+ <definition name="outline_width">The width of the outline of the region, as a distance.</definition>
+ <definition name="junction_low">The style of the boundary at the low address of the region.</definition>
+ <definition name="junction_high">The style of the boundary at the high address of the region.</definition>
+</definition-table>
+</p>
+
+<p>
+A boundary between two regions, which is called a junction, is drawn as a solid
+line unless a junction style says otherwise. The styles are
+<userinput>solid</userinput>, <userinput>dotted</userinput>,
+<userinput>dashed</userinput>, <userinput>double</userinput> for a double solid
+line, and <userinput>ticks</userinput> for marks at the edges only, which do not
+continue across the region. A style set on a region replaces the style of the
+adjoining junction of the neighbouring region.
+</p>
+
+<p>
+A discontinuity region has a different outline from an ordinary region. Its
+style is chosen with the <userinput>style</userinput> field in the
+<userinput>automatic</userinput> block, below, and is one of
+<userinput>zig-zag</userinput> (the default), <userinput>cut-out</userinput> for
+a wavy line like the break in a graph axis, <userinput>dotted</userinput> or
+<userinput>dashed</userinput>.
+</p>
+</subsection>
+
+<subsection title="The automatic block">
+<p>
+The <userinput>automatic</userinput> block asks for parts of the diagram to be
+generated rather than written by hand. It has two optional keys,
+<userinput>discontinuities</userinput> and <userinput>addresses</userinput>. The
+name of the second is plural.
+</p>
+
+<p>
+The value of <userinput>discontinuities</userinput> is <userinput>true</userinput>
+to fill in every gap between regions, or a mapping:
+</p>
+
+<p>
+<definition-table head-name="Key" head-value="Meaning">
+ <definition name="enable">Set to <userinput>false</userinput> to turn the filling off.</definition>
+ <definition name="fill">The fill colour of the discontinuities.</definition>
+ <definition name="outline">The colour of the outline of the discontinuities.</definition>
+ <definition name="style">The discontinuity style, from the list above.</definition>
+</definition-table>
+</p>
+
+<p>
+The value of <userinput>addresses</userinput> is <userinput>true</userinput> to
+label the start address of every region, or a mapping:
+</p>
+
+<p>
+<definition-table head-name="Key" head-value="Meaning">
+ <definition name="enable">Set to <userinput>false</userinput> to turn the labels off.</definition>
+ <definition name="start">Set to <userinput>true</userinput> (the default) to label the start address of each region.</definition>
+ <definition name="end">Set to <userinput>true</userinput> to label the end address of each region. The default is <userinput>false</userinput>.</definition>
+ <definition name="size">Set to <userinput>true</userinput> to label the size of each region. The default is <userinput>false</userinput>.</definition>
+ <definition name="side"><userinput>left</userinput> or <userinput>right</userinput> (the default), the side of the regions on which the labels are placed.</definition>
+ <definition name="end_exclusive">Set to <userinput>true</userinput> (the default) to give the end address as the address of the next byte after the region, or <userinput>false</userinput> to give the address of its last byte.</definition>
+ <definition name="final_end">Set to <userinput>true</userinput> to label the end of the last region even when <userinput>end</userinput> is off.</definition>
+ <definition name="omit">An address, or a list of addresses, for which no label is drawn. This is for addresses which are not fixed or not defined.</definition>
+ <definition name="colour">The colour of the address labels.</definition>
+</definition-table>
+</p>
+</subsection>
+</section>
+
+<section title="Errors and warnings">
+<p>
+The tool checks the description as it reads it, and writes what it finds to the
+error stream, one problem on each line. Each message gives the name of the tool,
+whether it is an error or a warning, the name of the file, and the problem.
+There are two kinds of problem.
+</p>
+
+<p>
+An <em>error</em> means that no diagram can be drawn. The tool exits with status
+1 and writes no output. The errors are:
+</p>
+
+<p>
+<list type="unordered">
+<item><p>a file which cannot be read;</p></item>
+<item><p>syntax which the description language does not support, such as an inline list <userinput>[a, b]</userinput> or mapping <userinput>{a: b}</userinput>, a block string, an anchor, an alias or a tag. The message gives the line number. A value that really does start with one of these characters must be quoted;</p></item>
+<item><p>a quoted string which is not closed, or which has text after the closing quote;</p></item>
+<item><p>a key which is given twice in the same mapping;</p></item>
+<item><p>a document which is not a mapping, or which has no <userinput>layout</userinput>, or whose <userinput>layout</userinput> has no regions;</p></item>
+<item><p>a layout address which is not a number.</p></item>
+</list>
+</p>
+
+<p>
+A <em>warning</em> means that the tool has understood enough to draw the diagram,
+but something in it was not as it should be, and it has used the default instead.
+The tool still writes the diagram and exits with status 0. The warnings are:
+</p>
+
+<p>
+<list type="unordered">
+<item><p>a key which is not known where it is found. The message suggests the known key which is most like it, so that <userinput>address</userinput> in the <userinput>automatic</userinput> block is reported with a suggestion of <userinput>addresses</userinput>;</p></item>
+<item><p>a value which is not valid for its field: a colour, a distance, a label position, a junction style, a discontinuity style, an address side, a format name, a yes/no value which is not <userinput>true</userinput> or <userinput>false</userinput>, or a size or unit which is not a whole number greater than zero;</p></item>
+<item><p>a field which has no value, such as a colour which has not been quoted;</p></item>
+<item><p>a section or value of the wrong type, such as a <userinput>defaults</userinput> block which is not a mapping;</p></item>
+<item><p>two layout addresses which are the same address, written differently, such as <userinput>16</userinput> and <userinput>0x10</userinput>.</p></item>
+</list>
+</p>
+
+<p>
+The warnings name the field in which the problem was found, such as
+<userinput>automatic.addresses.side</userinput> or <userinput>layout '0x1000' fill</userinput>.
+They do not give a line number, because only the syntax errors are found while
+the lines are being read.
+</p>
+
+<p>
+The <userinput>--strict</userinput> option makes every warning an error. The
+problems are reported as errors, no diagram is written, and the exit status is 1.
+Use it when a description is checked automatically, so that a mistake is not
+drawn silently.
+</p>
+
+<p>
+<extended-example type="shell">
+<userinput>$ mld readme.mld</userinput><br/>
+mld: warning: readme.mld: Unknown key 'address' in 'automatic' (did you mean 'addresses'?)<br/>
+<userinput>$ mld --strict readme.mld</userinput><br/>
+mld: error: readme.mld: Unknown key 'address' in 'automatic' (did you mean 'addresses'?)
+</extended-example>
+</p>
+</section>
+
+<section title="Worked example">
+<p>
+This description shows a small application space. The regions are given
+explicit sizes, one has a label on the left and one has a dotted boundary, the
+gaps are filled automatically, and the addresses are written in the RISC OS
+style.
+</p>
+
+<p>
+<extended-example type="format">
+defaults:<br/>
+&nbsp;&nbsp;unit_size: 0x1000<br/>
+&nbsp;&nbsp;address_format: acorn<br/>
+&nbsp;&nbsp;fill: "#C7E3EC"<br/>
+&nbsp;&nbsp;outline: "#336DA5"<br/>
+layout:<br/>
+&nbsp;&nbsp;0x8000:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;size: 0x4000<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;label: Program code<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;labels:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"el,ic": Read only<br/>
+&nbsp;&nbsp;0xC000:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;size: 0x2000<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;label: Static data<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;junction_high: dotted<br/>
+&nbsp;&nbsp;0x10000: Heap<br/>
+automatic:<br/>
+&nbsp;&nbsp;discontinuities: true<br/>
+&nbsp;&nbsp;addresses:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;side: right<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;start: true
+</extended-example>
+</p>
+
+<p>
+Drawing it with <userinput>mld</userinput> produces an SVG image, with
+the program code at the bottom and the heap above it.
+</p>
+
+<p>
+<extended-example type="shell">
+<userinput>mld appslot.mld --output appslot.svg</userinput>
+</extended-example>
+</p>
+</section>
+
+<section title="Output and limits">
+<p>
+The SVG renderer is the supported output. A second renderer writes a Graphviz
+description, but it cannot place regions close together and its output is much
+less faithful, so the SVG output is the one to use.
+</p>
+
+<p>
+The checks find mistakes in the structure and the values of the description.
+They cannot know whether the picture is what was intended: a region with the
+wrong label, or a size which is valid but not the one meant, is still drawn.
+Look at the picture after changing a description.
+</p>
+</section>
+
+<section title="Command line">
+<command-definition name="mld"
+                    description="Draw a memory layout diagram">
+<syntax>
+  <optional><switch name="-format"><userreplace>format</userreplace></switch></optional>
+  <optional><switch name="-output"><userreplace>output</userreplace></switch></optional>
+  <optional><switch name="-output-prefix"><userreplace>prefix</userreplace></switch></optional>
+  <optional><switch name="-strict"/></optional>
+  <userreplace>input</userreplace>
+</syntax>
+<parameter name="input">The <filename type="unix">.mld</filename> description to draw.</parameter>
+<parameter switch="-format" name="format">The output format: <userinput>svg</userinput> (the default) or <userinput>dot</userinput>, a Graphviz description which is provided for completeness and is much less faithful than the SVG.</parameter>
+<parameter switch="-output" name="output">The file to write. Without it, the image is written beside the input, with the <userinput>.mld</userinput> suffix replaced by the extension of the format.</parameter>
+<parameter switch="-output-prefix" name="prefix">A name to which the extension of the format is added, instead of naming the whole output.</parameter>
+<parameter switch="-strict">Treat unrecognised keys and invalid values as errors, rather than warnings. No output is written if there is any problem.</parameter>
+<use>
+<p><userinput>mld</userinput> reads a memory layout description and draws it as a
+self-contained SVG image: the regions of a memory map in a column, with the
+lowest address at the bottom, each labelled, with addresses and gaps drawn as
+the description asks. It is intended for documenting fixed memory maps, such as
+where an application slot, a module area or a ROM sits in the address space.
+The description language is described in this document.</p>
+<p>The exit status is 0 if the diagram was written, including when warnings were
+given, and 1 if there was an error, or if there were warnings and
+<userinput>--strict</userinput> was given. Nothing is written when the status is 1.</p>
+</use>
+<example>
+<command>mld memory.mld</command>
+</example>
+<example>
+<command>mld --strict memory.mld --output docs/memory.svg</command>
+</example>
+</command-definition>
+</section>
+</chapter>
+
+<meta>
+ <maintainer>
+  <email name="Charles Ferguson" address="gerph@gerph.org" />
+ </maintainer>
+ <disclaimer>
+  <p>&copy; Charles Ferguson, 2026.</p>
+ </disclaimer>
+ <history>
+  <revision number="1" author="Gerph" date="04 Oct 2026" title="Initial version">
+   <change>Added a chapter describing the Memory Layout Diagram description language used by riscos-mld.</change>
+  </revision>
+  <revision number="2" author="Gerph" date="16 Oct 2026" title="Errors and warnings">
+   <change>Described the errors and warnings that the tool now reports, the --strict option and the exit status, and replaced the statements that mistakes are not reported. Added the command line, and made the document stand alone with the tool.</change>
+  </revision>
+ </history>
+</meta>
+</riscos-prm>
