@@ -52,13 +52,19 @@ import re
 
 class YAMLError(Exception):
 
-    def __init__(self, message, lineno, *args):
+    def __init__(self, message, lineno=None, *args):
         super(YAMLError, self).__init__(message, *args)
+        self.message = message
         self.lineno = lineno
+
+    def __str__(self):
+        if self.lineno is None:
+            return self.message
+        return "line %s: %s" % (self.lineno, self.message)
 
 
 class SimpleYAMLState(object):
-    lineno = -1
+    lineno = 0
     root = None
     indent_level = None
     current_level = None
@@ -81,6 +87,18 @@ class SimpleYAML(object):
     value_base60_re = re.compile(r'^[-+]?[0-9][0-9_]*(:[0-5]?[0-9])+(\.[0-9_]*)?$')
     value_inf_re = re.compile(r'^[-+]?\.(inf|Inf|INF)$')
     value_nan_re = re.compile(r'^\.(nan|NaN|NAN)$')
+
+    # Characters which introduce YAML syntax we do not support; they would otherwise
+    # be silently read as plain text.
+    unsupported_indicators = {
+            '[': "flow style (inline lists) is not supported",
+            '{': "flow style (inline mappings) is not supported",
+            '|': "block strings are not supported",
+            '>': "block strings are not supported",
+            '&': "anchors are not supported",
+            '*': "aliases are not supported",
+            '!': "type tags are not supported",
+        }
 
     escape_split_re = re.compile(r'\\(?!\\)')
     escape_re = re.compile(r'\\(.)')
@@ -163,6 +181,14 @@ class SimpleYAML(object):
                     part = self.unichr(int(c, 16)) + part[9:]
                 value += part
             return value
+
+        # A value which opens a quote but was not matched above is malformed.
+        if s[0] in ('"', "'"):
+            raise YAMLError("Quoted string is not terminated (or has text after the closing quote): %s" % (s,))
+
+        if s[0] in self.unsupported_indicators:
+            raise YAMLError("%s (in '%s'); quote the value if it is plain text"
+                            % (self.unsupported_indicators[s[0]], s))
 
         # Once we've passed the quoted strings, we know that the
         # comments after the value are strippable, and that comments
@@ -268,7 +294,7 @@ class SimpleYAML(object):
 
     def load(self, fh):
         state = SimpleYAMLState()
-        state.lineno = -1
+        state.lineno = 0
         state.root = None
         state.indent_level = [0]
         state.current_level = [state.root]
@@ -386,6 +412,9 @@ class SimpleYAML(object):
                                 state.current = state.current[-1]
                             state.indent_level.append(indent)
 
+                    if isinstance(state.current, dict) and key in state.current:
+                        raise YAMLError("Duplicate key '%s'" % (key,), state.lineno)
+
                     if value == '':
                         state.current[key] = None
                         state.last = key
@@ -413,13 +442,13 @@ class SimpleYAML(object):
                 if self.debug:
                     print("last = %r" % (state.last,))
                     print("current = %r" % (state.current,))
-        except YAMLError:
+        except YAMLError as ex:
+            if ex.lineno is None:
+                ex.lineno = state.lineno
             raise
 
         except Exception as ex:
-            raise YAMLError("%s: %s (failed at line %s)" % (ex.__class__.__name__,
-                                                            ex,
-                                                            state.lineno,),
+            raise YAMLError("%s: %s" % (ex.__class__.__name__, ex),
                             state.lineno)
 
         return state.root
